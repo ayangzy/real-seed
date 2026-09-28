@@ -509,23 +509,47 @@ Application analyzers add your domain knowledge to every plan, before the AI see
 
 ### Locales
 
+Nigeria is built in (`--locale=ng`). To go further, write your own locale. For example, an app that only serves Lagos can use real Lagos neighbourhoods, local government areas and streets:
+
 ```php
+use Ayangzy\RealSeed\Extension\FieldContext;
 use Ayangzy\RealSeed\Locale\FakerLocale;
+use Ayangzy\RealSeed\Semantics\Semantic;
 
-class KenyaLocale extends FakerLocale
+class LagosLocale extends FakerLocale
 {
-    public function __construct() { parent::__construct('en_US', 'KES'); }
+    /** Neighbourhood => local government area */
+    private const AREAS = [
+        'Lekki' => 'Eti-Osa', 'Victoria Island' => 'Eti-Osa', 'Ikoyi' => 'Eti-Osa', 'Ajah' => 'Eti-Osa',
+        'Ikeja' => 'Ikeja', 'Allen' => 'Ikeja', 'Maryland' => 'Kosofe', 'Gbagada' => 'Kosofe',
+        'Yaba' => 'Lagos Mainland', 'Surulere' => 'Surulere', 'Festac' => 'Amuwo-Odofin', 'Ikorodu' => 'Ikorodu',
+    ];
 
-    public function value(string $semantic, \Ayangzy\RealSeed\Extension\FieldContext $context): mixed
+    private const STREETS = ['Admiralty Way', 'Allen Avenue', 'Awolowo Road', 'Herbert Macaulay Way', 'Adeola Odeku Street', 'Ogunlana Drive'];
+
+    public function __construct()
     {
-        return $semantic === \Ayangzy\RealSeed\Semantics\Semantic::CITY
-            ? $context->random->pick(['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru'])
-            : null;
+        parent::__construct('en_NG', 'NGN'); // Nigerian names from Faker, prices in naira
+    }
+
+    public function value(string $semantic, FieldContext $context): mixed
+    {
+        return match ($semantic) {
+            Semantic::CITY => $context->random->pick(array_keys(self::AREAS)),
+            Semantic::STATE => 'Lagos',
+            Semantic::STREET => $context->random->int(1, 120).' '.$context->random->pick(self::STREETS),
+            Semantic::PHONE => '0'.$context->random->pick(['803', '806', '813', '816', '703', '903', '905']).' '
+                .$context->random->string(3, '0123456789').' '.$context->random->string(4, '0123456789'),
+            default => null, // everything else: Faker's en_NG defaults
+        };
     }
 }
 
-// 'locales' => ['ke' => KenyaLocale::class]   →   php artisan real:seed --locale=ke
+// config/realseed.php: 'locales' => ['lagos' => LagosLocale::class]
+// php artisan real:seed --locale=lagos
 ```
+
+Return `null` for anything you don't want to change, and RealSeed falls back to the Faker locale you passed to the constructor. Use `$context->random` for randomness so `--seed` stays reproducible.
 
 ### AI providers
 
@@ -601,4 +625,6 @@ The suite never calls a real AI provider. AI behaviour is tested with fakes, inc
 
 ## License
 
-MIT
+RealSeed is open-source software licensed under the [MIT license](LICENSE).
+
+Copyright © 2026 ayangzy
