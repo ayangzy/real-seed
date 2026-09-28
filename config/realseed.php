@@ -42,7 +42,7 @@ return [
         'driver' => env('REALSEED_AI_DRIVER', 'laravel-ai'),
         'provider' => env('REALSEED_AI_PROVIDER'),
         'model' => env('REALSEED_AI_MODEL'),
-        'timeout' => 120,
+        'timeout' => (int) env('REALSEED_AI_TIMEOUT', 300), // seconds; large schemas need longer answers
     ],
 
     /*

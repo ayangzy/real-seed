@@ -84,3 +84,19 @@ it('treats a Gemini free-tier limit as a rate limit, not missing credit', functi
 
     $this->fail('Expected an AIProviderException.');
 });
+
+it('explains a timeout hidden behind "could not connect"', function () {
+    StructuredAnonymousAgent::fake(fn () => throw \Laravel\Ai\Exceptions\ProviderConnectionException::forProvider(
+        'gemini', 0, new \Illuminate\Http\Client\ConnectionException('cURL error 28: Operation timed out after 300001 milliseconds with 0 bytes received'),
+    ));
+
+    (new LaravelAiProvider('gemini', null, 300))->generate('instructions', 'prompt', PlanPrompt::schema());
+})->throws(AIProviderException::class, 'Cause: cURL error 28: Operation timed out after 300001 milliseconds with 0 bytes received The AI took longer than 300 seconds to answer. Raise REALSEED_AI_TIMEOUT');
+
+it('explains DNS failures', function () {
+    StructuredAnonymousAgent::fake(fn () => throw \Laravel\Ai\Exceptions\ProviderConnectionException::forProvider(
+        'gemini', 0, new \Illuminate\Http\Client\ConnectionException('cURL error 6: Could not resolve host: generativelanguage.googleapis.com'),
+    ));
+
+    (new LaravelAiProvider('gemini'))->generate('instructions', 'prompt', PlanPrompt::schema());
+})->throws(AIProviderException::class, 'could not be resolved: check your internet connection or DNS');

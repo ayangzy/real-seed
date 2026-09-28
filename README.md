@@ -299,7 +299,7 @@ With `laravel/ai` installed, RealSeed asks your configured model (Anthropic, Ope
 - a one-line understanding of what the application does
 - realistic row counts and history length
 - realistic proportions for statuses and other enums
-- 15–40 believable example values for visible text (task titles, product names, notes) that fit your domain and scenario
+- 8–15 believable example values for visible text (task titles, product names, notes) that fit your domain and scenario
 - workflow rules, such as `cancelled_at` only when `status = cancelled`
 - factory state mixes
 
@@ -316,6 +316,7 @@ OPENAI_API_KEY=sk-...              # required: read by laravel/ai, not by RealSe
 # Optional RealSeed settings (leave them out to use the defaults)
 REALSEED_AI_PROVIDER=openai        # anthropic, gemini, ollama, ... (default: laravel/ai's default, openai)
 REALSEED_AI_MODEL=gpt-5-mini       # default: the provider's default model
+REALSEED_AI_TIMEOUT=300            # seconds to wait for the AI's answer (default 300)
 ```
 
 Using another provider means setting its key and the provider name, e.g. `ANTHROPIC_API_KEY=…` with `REALSEED_AI_PROVIDER=anthropic`. [Ollama](https://ollama.com) runs models locally for free with no key: `REALSEED_AI_PROVIDER=ollama` and `REALSEED_AI_MODEL=llama3.1`.

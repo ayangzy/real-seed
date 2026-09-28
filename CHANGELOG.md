@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.4
+
+- "Could not connect to AI provider" now shows the real cause (timeout, DNS, SSL) with a hint. Timeouts are the usual cause: large schemas need long answers.
+- AI timeout is configurable with `REALSEED_AI_TIMEOUT` and defaults to 300 seconds (was 120).
+- Smaller, faster AI answers: 8–15 samples per text column instead of 15–40, and nothing for tables that aren't being generated.
+- Google and Anthropic error details are read correctly; Gemini free-tier limits are no longer mistaken for missing credit.
+
 ## v0.2.2
 
 - AI failures now include the provider's own explanation. `laravel/ai` reports every HTTP 429 as "rate limited", but OpenAI also uses 429 for accounts without API credit; RealSeed now shows which it is, with a hint (add billing, or wait and retry with the prompt's size in tokens).

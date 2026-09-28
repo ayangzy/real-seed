@@ -5,7 +5,9 @@ namespace Ayangzy\RealSeed\AI\Providers;
 use Ayangzy\RealSeed\AI\AIProviderException;
 use Ayangzy\RealSeed\AI\AIProviderInterface;
 use Closure;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Str;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Throwable;
 
@@ -20,7 +22,7 @@ final class LaravelAiProvider implements AIProviderInterface
     public function __construct(
         private readonly ?string $provider = null,
         private readonly ?string $model = null,
-        private readonly int $timeout = 120,
+        private readonly int $timeout = 300,
     ) {
     }
 
@@ -82,12 +84,31 @@ final class LaravelAiProvider implements AIProviderInterface
             $message .= ' Provider says: '.$details;
         }
 
+        // Connection failures hide the transport error (timeout, DNS, SSL) one level down.
+        $transport = null;
+
+        for ($cause = $e->getPrevious(); $cause !== null; $cause = $cause->getPrevious()) {
+            if ($cause instanceof ConnectionException) {
+                $transport = $cause->getMessage();
+                $message .= ' Cause: '.Str::limit($transport, 200);
+                break;
+            }
+        }
+
         $lower = strtolower((string) $details);
 
         $hint = match (true) {
             // "quota" alone is ambiguous: Google reports free-tier rate limits as RESOURCE_EXHAUSTED ... quota.
             str_contains($lower, 'insufficient_quota') || str_contains($lower, 'billing') || str_contains($lower, 'credit balance')
                 => ' The account has no API credit: add billing with your AI provider (API usage is billed separately from chat subscriptions).',
+            $transport !== null && (str_contains($transport, 'cURL error 28') || stripos($transport, 'timed out') !== false)
+                => " The AI took longer than {$this->timeout} seconds to answer. Raise REALSEED_AI_TIMEOUT (e.g. 300), or choose a faster model (REALSEED_AI_MODEL).",
+            $transport !== null && str_contains($transport, 'cURL error 6')
+                => ' The provider\'s host name could not be resolved: check your internet connection or DNS.',
+            $transport !== null && (str_contains($transport, 'cURL error 60') || str_contains($transport, 'cURL error 77') || stripos($transport, 'SSL') !== false)
+                => ' SSL certificate verification failed: update your CA certificates (curl.cainfo in php.ini).',
+            $transport !== null
+                => ' Check your internet connection, proxy or VPN.',
             str_contains($e->getMessage(), 'rate limited') || str_contains($lower, 'rate_limit') || str_contains($lower, 'resource_exhausted')
                 => sprintf(' The prompt was about %s tokens; wait a minute and retry, or choose a model with higher limits (REALSEED_AI_MODEL).', number_format((int) (mb_strlen($sent) / 4))),
             default => '',

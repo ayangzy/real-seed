@@ -25,7 +25,7 @@ final class PlanPrompt
         - Row counts are relative to each other: parents fewer than children, reference tables small.
           Keep the overall size close to the baseline unless the scenario asks for more or less.
         - For text columns that users see (names, titles, subjects, descriptions, messages, notes),
-          give 15-40 varied, realistic samples that fit the application and scenario. Write them in
+          give 8-15 varied, realistic samples that fit the application and scenario. Write them in
           the language and culture of the requested locale. Samples must be clearly fictional:
           never real people, real private contact details, or real customer records.
         - For enum/status columns give weights reflecting realistic proportions.
@@ -34,6 +34,8 @@ final class PlanPrompt
           (e.g. cancelled_at only when status is cancelled).
         - Only change a column's semantic when the baseline is clearly wrong.
         - Omit anything you have no better suggestion for; the baseline is used instead.
+        - Skip tables marked "not generated in this run" and columns you would leave unchanged.
+          Keep the answer compact: it is parsed by a program, not read by a person.
         TEXT;
     }
 

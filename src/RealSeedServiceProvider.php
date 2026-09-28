@@ -22,7 +22,7 @@ class RealSeedServiceProvider extends ServiceProvider
             $driver = $config['driver'] ?? 'laravel-ai';
 
             return match (true) {
-                $driver === 'laravel-ai' => new LaravelAiProvider($config['provider'] ?? null, $config['model'] ?? null, (int) ($config['timeout'] ?? 120)),
+                $driver === 'laravel-ai' => new LaravelAiProvider($config['provider'] ?? null, $config['model'] ?? null, (int) ($config['timeout'] ?? 300)),
                 is_string($driver) && is_subclass_of($driver, AIProviderInterface::class) => $app->make($driver),
                 default => new NullProvider('Unknown AI driver ['.(is_string($driver) ? $driver : get_debug_type($driver)).'].'),
             };
