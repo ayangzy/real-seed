@@ -4,12 +4,26 @@
     "keywords": [
         "laravel",
         "seeder",
+        "seeding",
         "factory",
+        "faker",
         "synthetic-data",
-        "ai",
-        "faker"
+        "test-data",
+        "fake-data",
+        "ai"
     ],
     "license": "MIT",
+    "homepage": "https://github.com/ayangzy/laravel-realseed",
+    "support": {
+        "issues": "https://github.com/ayangzy/laravel-realseed/issues",
+        "source": "https://github.com/ayangzy/laravel-realseed"
+    },
+    "authors": [
+        {
+            "name": "ayangzy",
+            "homepage": "https://github.com/ayangzy"
+        }
+    ],
     "type": "library",
     "require": {
         "php": "^8.3",
