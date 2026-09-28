@@ -57,4 +57,35 @@ return [
 
     'excluded_columns' => [],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Generation Defaults
+    |--------------------------------------------------------------------------
+    |
+    | size:     small, medium, or large (overridden by --size)
+    | locale:   Faker locale for names, addresses, and phone numbers
+    | currency: ISO code used for currency columns
+    |
+    */
+
+    'size' => 'medium',
+
+    'locale' => 'en_US',
+
+    'currency' => 'USD',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Performance
+    |--------------------------------------------------------------------------
+    |
+    | chunk_size:          maximum rows per INSERT statement
+    | existing_rows_limit: existing rows loaded per table to connect new data to
+    |
+    */
+
+    'chunk_size' => 500,
+
+    'existing_rows_limit' => 100000,
+
 ];

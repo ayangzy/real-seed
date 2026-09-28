@@ -19,6 +19,7 @@ abstract class TestCase extends Orchestra
             'driver' => 'sqlite',
             'database' => ':memory:',
             'prefix' => '',
+            'foreign_key_constraints' => true,
         ]);
         $app['config']->set('ai-seeder.model_paths', [__DIR__.'/Fixtures/Models']);
     }

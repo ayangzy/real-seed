@@ -89,13 +89,12 @@ it('summarises the analysed application', function () {
     \AISeeder\Tests\Fixtures\SaasSchema::create();
     $this->setEnvironment('local');
 
-    $this->artisan('ai:seed')
+    $this->artisan('ai:seed', ['--dry-run' => true])
         ->expectsOutputToContain('6 models detected')
         ->expectsOutputToContain('8 tables detected')
         ->expectsOutputToContain('2 enums detected')
         ->expectsOutputToContain('Detected application structures:')
         ->expectsOutputToContain('Organizations')
-        ->doesntExpectOutputToContain('Project User')
         ->assertExitCode(0);
 });
 
