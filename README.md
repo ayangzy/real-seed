@@ -6,6 +6,36 @@
 php artisan realseed        # also available as: php artisan ai:seed
 ```
 
+## The problem
+
+You've built your application. Now you need it to *look* like a real application: for local development, UI work, demos, QA and staging.
+
+Laravel gives you factories, Faker and seeders, and they make it easy to create data. But they work one model and one field at a time. They don't know how your application's records relate, what order things happen in, or what your data means. So you get data that is technically valid but obviously fake:
+
+```text
+Task #412    "Voluptatem quia et"     assigned to a user from a different company
+Invoice #88  paid on 2024-03-02       for a subscription created on 2025-11-19
+Order #15    status: delivered        delivered_at: null
+User #3      2 comments               User #4: 2 comments       User #5: 2 comments ...
+```
+
+The database is full, but the dashboards, tables, reports and activity feeds still feel empty and artificial. The records don't tell a coherent story.
+
+To fix that, developers end up hand-writing and maintaining large seeders: wiring up relationships, ordering dates, choosing statuses, inventing believable text. It's slow, it breaks whenever the schema changes, and it has to be redone for every project.
+
+**RealSeed does that work for you.** It reads your application's actual structure and generates data that is coherent across the whole application:
+
+```text
+Task #412    "Fix invoice PDF rounding"   assigned to a teammate in the same company
+Invoice #88  paid 2026-02-03              for a subscription created 2026-01-12
+Order #15    status: delivered            delivered_at: 2026-04-18 14:02
+User #3      41 comments                  User #4: 6 comments       User #5: 0 comments ...
+```
+
+Relationships, timelines, statuses and activity patterns work out of the box, with no AI keys needed. Domain-specific text such as task titles comes from [AI planning](#ai-planning) or from samples you provide.
+
+## What RealSeed does
+
 RealSeed reads your migrated database, models, enums and factories. It then fills local, development and staging databases with data that looks like real usage:
 
 - Organizations have members.
