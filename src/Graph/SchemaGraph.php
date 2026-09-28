@@ -63,6 +63,16 @@ final class SchemaGraph
         }
 
         $morphSlots = self::confirmedMorphSlots($schema, $models, $morphSlots, $edges, $declaredMorphs);
+
+        // A polymorphic id column is never also a plain link; only a real database
+        // foreign key (which rules out polymorphism) would have removed the slot above.
+        foreach ($morphSlots as $slot) {
+            $key = "{$slot->table}.{$slot->idColumn}";
+
+            if (isset($edges[$key]) && $edges[$key]->source !== Edge::SOURCE_FOREIGN_KEY) {
+                unset($edges[$key]);
+            }
+        }
         $edges = self::addConventionEdges($schema, $edges, $morphSlots);
 
         ksort($edges);
@@ -223,9 +233,22 @@ final class SchemaGraph
                 break;
 
             case RelationInfo::MORPH_TO_MANY:
-                // Declared on the morphing parent, e.g. Post::tags() over "taggables".
-                if ($schema->has($relation->pivotTable)) {
-                    $pivots[$relation->pivotTable] = true;
+                if (! $schema->has($relation->pivotTable)) {
+                    break;
+                }
+
+                $pivots[$relation->pivotTable] = true;
+
+                if ($relation->inverse) {
+                    // morphedByMany, declared on the plain side: Permission::users() over
+                    // model_has_permissions. permission_id is a plain link; model_id is the
+                    // polymorphic id, pointing at the related model (users).
+                    $addEdge($relation->pivotTable, $relation->foreignPivotKey, $model->table, $model->keyName);
+                    self::addMorphTarget($morphSlots, $relation->pivotTable, $relation->morphType, $relation->morphClass, $relation->relatedTable);
+                } else {
+                    // morphToMany, declared on the polymorphic side: Post::tags() or
+                    // User::permissions(). The related key is a plain link; the foreign
+                    // pivot key is the polymorphic id, pointing at this model.
                     $addEdge($relation->pivotTable, $relation->relatedPivotKey, $relation->relatedTable, $relation->ownerKey);
                     self::addMorphTarget($morphSlots, $relation->pivotTable, $relation->morphType, $relation->morphClass, $model->table);
                 }

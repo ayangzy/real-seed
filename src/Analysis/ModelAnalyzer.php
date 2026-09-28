@@ -170,6 +170,7 @@ final class ModelAnalyzer
                 relatedPivotKey: $relation->getRelatedPivotKeyName(),
                 morphType: $relation->getMorphType(),
                 morphClass: $relation->getMorphClass(),
+                inverse: method_exists($relation, 'getInverse') && $relation->getInverse(),
             ),
             $relation instanceof BelongsToMany => new RelationInfo(
                 name: $name,

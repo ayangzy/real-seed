@@ -25,6 +25,8 @@ final readonly class RelationInfo
         public ?string $relatedPivotKey = null,
         public ?string $morphType = null,
         public ?string $morphClass = null,
+        /** For morphToMany: true when declared from the non-polymorphic side (morphedByMany). */
+        public bool $inverse = false,
     ) {
     }
 }

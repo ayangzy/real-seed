@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.6
+
+- Fix: pivots declared with `morphedByMany` (e.g. spatie/laravel-permission's `Permission::users()` over `model_has_permissions`) were read in the wrong direction: `model_id` was linked to the wrong table and treated both as a polymorphic id and a plain link, failing with "rows reference missing [users] rows". Both directions are now understood, and a polymorphic id column is never also treated as a plain link.
+
 ## v0.1.5
 
 - Fix: any `{name}_type` + `{name}_id` pair was assumed to be polymorphic. A `bank_accounts` table with an `account_type` enum (checking, savings, …) was skipped, and with `morph_targets` set its enum column received a model class name. Pairs now need evidence: a declared morph relation, or no contradiction (fixed non-model values in the `_type` column, or a foreign key/`belongsTo` on the `_id` column).
