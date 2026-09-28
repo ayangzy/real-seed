@@ -1,9 +1,9 @@
 <?php
 
-use AISeeder\Analysis\ModelAnalyzer;
-use AISeeder\Analysis\ModelFinder;
-use AISeeder\Analysis\RelationInfo;
-use AISeeder\Tests\Fixtures\Models;
+use Ayangzy\RealSeed\Analysis\ModelAnalyzer;
+use Ayangzy\RealSeed\Analysis\ModelFinder;
+use Ayangzy\RealSeed\Analysis\RelationInfo;
+use Ayangzy\RealSeed\Tests\Fixtures\Models;
 
 it('finds concrete models in any directory', function () {
     expect((new ModelFinder)->find([__DIR__.'/../Fixtures/Models']))->toBe([
@@ -39,6 +39,6 @@ it('describes polymorphic relations', function () {
 it('reads casts', function () {
     $user = (new ModelAnalyzer)->analyze(Models\User::class);
 
-    expect($user->casts['status'])->toBe(\AISeeder\Tests\Fixtures\Enums\UserStatus::class)
+    expect($user->casts['status'])->toBe(\Ayangzy\RealSeed\Tests\Fixtures\Enums\UserStatus::class)
         ->and($user->table)->toBe('users');
 });

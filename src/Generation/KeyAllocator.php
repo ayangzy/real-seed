@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Generation;
+namespace Ayangzy\RealSeed\Generation;
 
 use Illuminate\Support\Str;
 

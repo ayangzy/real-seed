@@ -1,15 +1,15 @@
 <?php
 
-namespace AISeeder\Generation;
+namespace Ayangzy\RealSeed\Generation;
 
-use AISeeder\Extension\ExtensionRegistry;
-use AISeeder\Extension\ReferenceContext;
-use AISeeder\Extension\ReferencePicker;
-use AISeeder\Graph\DependencyOrder;
-use AISeeder\Graph\Edge;
-use AISeeder\Graph\MorphSlot;
-use AISeeder\Graph\SchemaGraph;
-use AISeeder\Planning\TablePlan;
+use Ayangzy\RealSeed\Extension\ExtensionRegistry;
+use Ayangzy\RealSeed\Extension\ReferenceContext;
+use Ayangzy\RealSeed\Extension\ReferencePicker;
+use Ayangzy\RealSeed\Graph\DependencyOrder;
+use Ayangzy\RealSeed\Graph\Edge;
+use Ayangzy\RealSeed\Graph\MorphSlot;
+use Ayangzy\RealSeed\Graph\SchemaGraph;
+use Ayangzy\RealSeed\Planning\TablePlan;
 use RuntimeException;
 
 /**

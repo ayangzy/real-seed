@@ -1,35 +1,35 @@
 <?php
 
-namespace AISeeder\Tests;
+namespace Ayangzy\RealSeed\Tests;
 
-use AISeeder\AISeederServiceProvider;
+use Ayangzy\RealSeed\RealSeedServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
 {
     protected function getPackageProviders($app): array
     {
-        return [AISeederServiceProvider::class];
+        return [RealSeedServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void
     {
         $app['config']->set('database.default', 'testbench');
         $app['config']->set('database.connections.testbench', self::testConnection());
-        $app['config']->set('ai-seeder.model_paths', [__DIR__.'/Fixtures/Models']);
+        $app['config']->set('realseed.model_paths', [__DIR__.'/Fixtures/Models']);
 
         // Tests never reach a real AI provider; AI tests bind a fake explicitly.
-        $app['config']->set('ai-seeder.ai.enabled', false);
-        $app['config']->set('ai-seeder.plans_path', sys_get_temp_dir().'/ai-seeder-tests/'.uniqid());
+        $app['config']->set('realseed.ai.enabled', false);
+        $app['config']->set('realseed.plans_path', sys_get_temp_dir().'/realseed-tests/'.uniqid());
     }
 
     /**
-     * SQLite in memory by default; set AI_SEEDER_TEST_DRIVER=mysql|pgsql (plus DB_HOST, DB_PORT,
+     * SQLite in memory by default; set REALSEED_TEST_DRIVER=mysql|pgsql (plus DB_HOST, DB_PORT,
      * DB_DATABASE, DB_USERNAME, DB_PASSWORD) to run the suite against a real server.
      */
     private static function testConnection(): array
     {
-        $driver = getenv('AI_SEEDER_TEST_DRIVER') ?: 'sqlite';
+        $driver = getenv('REALSEED_TEST_DRIVER') ?: 'sqlite';
 
         if ($driver === 'sqlite') {
             return ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true];
@@ -39,7 +39,7 @@ abstract class TestCase extends Orchestra
             'driver' => $driver,
             'host' => getenv('DB_HOST') ?: '127.0.0.1',
             'port' => getenv('DB_PORT') ?: ($driver === 'pgsql' ? '5432' : '3306'),
-            'database' => getenv('DB_DATABASE') ?: 'ai_seeder_test',
+            'database' => getenv('DB_DATABASE') ?: 'realseed_test',
             'username' => getenv('DB_USERNAME') ?: 'root',
             'password' => getenv('DB_PASSWORD') ?: '',
             'charset' => $driver === 'pgsql' ? 'utf8' : 'utf8mb4',
@@ -64,7 +64,7 @@ abstract class TestCase extends Orchestra
     protected function tearDown(): void
     {
         if (isset($this->app)) {
-            (new \Illuminate\Filesystem\Filesystem)->deleteDirectory($this->app['config']->get('ai-seeder.plans_path'));
+            (new \Illuminate\Filesystem\Filesystem)->deleteDirectory($this->app['config']->get('realseed.plans_path'));
         }
 
         parent::tearDown();
@@ -75,7 +75,7 @@ abstract class TestCase extends Orchestra
      */
     protected function refreshApplicationBindings(): void
     {
-        foreach ([\AISeeder\Extension\ExtensionRegistry::class, \AISeeder\Locale\LocaleRegistry::class] as $abstract) {
+        foreach ([\Ayangzy\RealSeed\Extension\ExtensionRegistry::class, \Ayangzy\RealSeed\Locale\LocaleRegistry::class] as $abstract) {
             $this->app->forgetInstance($abstract);
         }
     }

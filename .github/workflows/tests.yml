@@ -20,14 +20,14 @@ jobs:
         image: mysql:8.4
         env:
           MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: ai_seeder_test
+          MYSQL_DATABASE: realseed_test
         ports: ['3306:3306']
         options: --health-cmd="mysqladmin ping -ppassword" --health-interval=10s --health-timeout=5s --health-retries=5
       postgres:
         image: postgres:17
         env:
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: ai_seeder_test
+          POSTGRES_DB: realseed_test
         ports: ['5432:5432']
         options: --health-cmd=pg_isready --health-interval=10s --health-timeout=5s --health-retries=5
 
@@ -45,10 +45,10 @@ jobs:
       - name: Tests
         run: vendor/bin/pest
         env:
-          AI_SEEDER_TEST_DRIVER: ${{ matrix.database }}
+          REALSEED_TEST_DRIVER: ${{ matrix.database }}
           DB_HOST: 127.0.0.1
           DB_PORT: ${{ matrix.database == 'pgsql' && '5432' || '3306' }}
-          DB_DATABASE: ai_seeder_test
+          DB_DATABASE: realseed_test
           DB_USERNAME: ${{ matrix.database == 'pgsql' && 'postgres' || 'root' }}
           DB_PASSWORD: password
 
@@ -56,9 +56,9 @@ jobs:
         if: matrix.php == '8.4'
         run: vendor/bin/pest --group=benchmark
         env:
-          AI_SEEDER_TEST_DRIVER: ${{ matrix.database }}
+          REALSEED_TEST_DRIVER: ${{ matrix.database }}
           DB_HOST: 127.0.0.1
           DB_PORT: ${{ matrix.database == 'pgsql' && '5432' || '3306' }}
-          DB_DATABASE: ai_seeder_test
+          DB_DATABASE: realseed_test
           DB_USERNAME: ${{ matrix.database == 'pgsql' && 'postgres' || 'root' }}
           DB_PASSWORD: password

@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Planning;
+namespace Ayangzy\RealSeed\Planning;
 
 /**
- * Converts the friendly "overrides" map in config/ai-seeder.php into the suggestion
+ * Converts the friendly "overrides" map in config/realseed.php into the suggestion
  * format every planner input uses, so configuration is validated like everything else:
  *
  *     'users' => [

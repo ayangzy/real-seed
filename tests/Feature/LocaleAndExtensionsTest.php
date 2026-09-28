@@ -1,8 +1,8 @@
 <?php
 
-use AISeeder\Tests\Fixtures\Extensions;
-use AISeeder\Tests\Fixtures\FakeAIProvider;
-use AISeeder\Tests\Fixtures\SaasSchema;
+use Ayangzy\RealSeed\Tests\Fixtures\Extensions;
+use Ayangzy\RealSeed\Tests\Fixtures\FakeAIProvider;
+use Ayangzy\RealSeed\Tests\Fixtures\SaasSchema;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Artisan;
@@ -32,14 +32,14 @@ beforeEach(function () {
 
 function seedRun(array $options = []): int
 {
-    return Artisan::call('ai:seed', ['--seed' => 3, '--size' => 'small', '--no-interaction' => true, ...$options]);
+    return Artisan::call('realseed', ['--seed' => 3, '--size' => 'small', '--no-interaction' => true, ...$options]);
 }
 
 it('generates coherent Nigerian data with --locale=ng', function () {
     expect(seedRun(['--locale' => 'ng', '--only' => 'contacts']))->toBe(0);
 
     $contacts = DB::table('contacts')->get();
-    $states = (new ReflectionClassConstant(\AISeeder\Locale\NigeriaLocale::class, 'STATES'))->getValue();
+    $states = (new ReflectionClassConstant(\Ayangzy\RealSeed\Locale\NigeriaLocale::class, 'STATES'))->getValue();
 
     expect($contacts)->not->toBeEmpty();
 
@@ -63,7 +63,7 @@ it('supports Faker locales and rejects unknown ones', function () {
 });
 
 it('uses custom locales registered in config', function () {
-    config(['ai-seeder.locales' => ['moon' => Extensions\MoonLocale::class]]);
+    config(['realseed.locales' => ['moon' => Extensions\MoonLocale::class]]);
     $this->refreshApplicationBindings();
 
     seedRun(['--locale' => 'moon', '--only' => 'contacts']);
@@ -73,7 +73,7 @@ it('uses custom locales registered in config', function () {
 });
 
 it('applies custom field generators with the most specific registration winning', function () {
-    config(['ai-seeder.generators' => [
+    config(['realseed.generators' => [
         '*.phone' => Extensions\FixedPhoneGenerator::class,
         'contacts.phone' => Extensions\ContactPhoneGenerator::class,
     ]]);
@@ -84,8 +84,8 @@ it('applies custom field generators with the most specific registration winning'
     expect(DB::table('contacts')->pluck('phone')->unique()->all())->toBe(['contact-specific']);
 });
 
-it('applies row generators but keeps references with AI Seeder', function () {
-    config(['ai-seeder.row_generators' => ['tasks' => Extensions\TaskRowGenerator::class]]);
+it('applies row generators but keeps references with RealSeed', function () {
+    config(['realseed.row_generators' => ['tasks' => Extensions\TaskRowGenerator::class]]);
     $this->refreshApplicationBindings();
 
     seedRun(['--only' => 'tasks']);
@@ -97,7 +97,7 @@ it('applies row generators but keeps references with AI Seeder', function () {
 });
 
 it('lets reference pickers choose among valid candidates only', function () {
-    config(['ai-seeder.reference_pickers' => [
+    config(['realseed.reference_pickers' => [
         'tasks.assignee_id' => Extensions\NoAssigneePicker::class,
         'projects.owner_id' => Extensions\BogusOwnerPicker::class,
         'project_user.user_id' => Extensions\FirstMemberPicker::class,
@@ -114,7 +114,7 @@ it('lets reference pickers choose among valid candidates only', function () {
 });
 
 it('runs named scenarios without AI', function () {
-    config(['ai-seeder.scenarios' => ['solo' => Extensions\SoloFounderScenario::class]]);
+    config(['realseed.scenarios' => ['solo' => Extensions\SoloFounderScenario::class]]);
     $this->refreshApplicationBindings();
 
     expect(seedRun(['--scenario' => 'solo', '--no-ai' => true]))->toBe(0);
@@ -125,7 +125,7 @@ it('runs named scenarios without AI', function () {
 });
 
 it('applies application analyzers to every plan', function () {
-    config(['ai-seeder.analyzers' => [Extensions\TaskTitleAnalyzer::class]]);
+    config(['realseed.analyzers' => [Extensions\TaskTitleAnalyzer::class]]);
     $this->refreshApplicationBindings();
 
     seedRun();
@@ -135,8 +135,8 @@ it('applies application analyzers to every plan', function () {
 
 it('lets configuration override AI suggestions', function () {
     config([
-        'ai-seeder.ai.enabled' => true,
-        'ai-seeder.overrides' => [
+        'realseed.ai.enabled' => true,
+        'realseed.overrides' => [
             'users' => [
                 'count' => 4,
                 'fields' => [
@@ -146,7 +146,7 @@ it('lets configuration override AI suggestions', function () {
             ],
         ],
     ]);
-    app()->instance(\AISeeder\AI\AIProviderInterface::class, new FakeAIProvider([
+    app()->instance(\Ayangzy\RealSeed\AI\AIProviderInterface::class, new FakeAIProvider([
         'domain' => 'x', 'timeline_months' => null,
         'tables' => [['table' => 'users', 'count' => 6, 'states' => null, 'fields' => [
             ['column' => 'status', 'semantic' => null, 'samples' => null, 'weights' => [['value' => 'active', 'weight' => 1]], 'null_rate' => null, 'true_rate' => null, 'min' => null, 'max' => null, 'present_when' => null],
@@ -161,9 +161,9 @@ it('lets configuration override AI suggestions', function () {
 });
 
 it('fails clearly on a misconfigured extension', function () {
-    config(['ai-seeder.generators' => ['*.phone' => \stdClass::class]]);
+    config(['realseed.generators' => ['*.phone' => \stdClass::class]]);
     $this->refreshApplicationBindings();
 
     expect(seedRun(['--only' => 'contacts']))->toBe(1);
-    expect(Artisan::output())->toContain('does not implement AISeeder\Extension\FieldGenerator');
+    expect(Artisan::output())->toContain('does not implement Ayangzy\RealSeed\Extension\FieldGenerator');
 });

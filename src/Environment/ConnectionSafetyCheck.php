@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Environment;
+namespace Ayangzy\RealSeed\Environment;
 
 /**
  * Heuristics that catch an allowed APP_ENV pointed at a database that looks like production.

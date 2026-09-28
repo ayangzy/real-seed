@@ -1,8 +1,8 @@
 <?php
 
-namespace AISeeder\Validation;
+namespace Ayangzy\RealSeed\Validation;
 
-use AISeeder\Schema\TableSchema;
+use Ayangzy\RealSeed\Schema\TableSchema;
 
 /**
  * Last line of defence before insert: every serialized row is checked against the

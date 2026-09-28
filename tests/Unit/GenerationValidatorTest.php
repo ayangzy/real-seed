@@ -1,9 +1,9 @@
 <?php
 
-use AISeeder\Schema\SchemaReader;
-use AISeeder\Tests\Fixtures\SaasSchema;
-use AISeeder\Validation\GenerationException;
-use AISeeder\Validation\GenerationValidator;
+use Ayangzy\RealSeed\Schema\SchemaReader;
+use Ayangzy\RealSeed\Tests\Fixtures\SaasSchema;
+use Ayangzy\RealSeed\Validation\GenerationException;
+use Ayangzy\RealSeed\Validation\GenerationValidator;
 
 beforeEach(function () {
     SaasSchema::create();

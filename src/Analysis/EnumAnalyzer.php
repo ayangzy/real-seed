@@ -1,8 +1,8 @@
 <?php
 
-namespace AISeeder\Analysis;
+namespace Ayangzy\RealSeed\Analysis;
 
-use AISeeder\Schema\DatabaseSchema;
+use Ayangzy\RealSeed\Schema\DatabaseSchema;
 use BackedEnum;
 
 /**

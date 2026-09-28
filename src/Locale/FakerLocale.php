@@ -1,8 +1,8 @@
 <?php
 
-namespace AISeeder\Locale;
+namespace Ayangzy\RealSeed\Locale;
 
-use AISeeder\Extension\FieldContext;
+use Ayangzy\RealSeed\Extension\FieldContext;
 
 /**
  * Any Faker locale (en_US, de_DE, pt_BR, ...) with its country and currency.

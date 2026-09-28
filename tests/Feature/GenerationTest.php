@@ -1,6 +1,6 @@
 <?php
 
-use AISeeder\Tests\Fixtures\SaasSchema;
+use Ayangzy\RealSeed\Tests\Fixtures\SaasSchema;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +14,7 @@ beforeEach(function () {
 
 function seedSaas(array $options = []): int
 {
-    return Artisan::call('ai:seed', ['--seed' => 42, '--size' => 'small', '--no-interaction' => true, ...$options]);
+    return Artisan::call('realseed', ['--seed' => 42, '--size' => 'small', '--no-interaction' => true, ...$options]);
 }
 
 function scalar(string $sql): int
@@ -36,7 +36,7 @@ it('generates the planned rows', function () {
     expect(seedSaas())->toBe(0);
 
     // Artisan::output() drains the buffer, so read it once.
-    expect(Artisan::output())->toContain('AI Seeder Complete')->toContain('✓ Temporal consistency')
+    expect(Artisan::output())->toContain('RealSeed Complete')->toContain('✓ Temporal consistency')
         ->and(DB::table('organizations')->count())->toBe(3)
         ->and(DB::table('users')->count())->toBe(9)
         ->and(DB::table('tags')->count())->toBe(5)
@@ -110,7 +110,7 @@ it('is reproducible for the same seed and differs for another', function () {
 });
 
 it('makes no changes on a dry run', function () {
-    Artisan::call('ai:seed', ['--dry-run' => true, '--size' => 'small']);
+    Artisan::call('realseed', ['--dry-run' => true, '--size' => 'small']);
 
     expect(Artisan::output())->toContain('Generation Plan')->toContain('No database changes were made.')
         ->and(DB::table('users')->count())->toBe(0);
@@ -172,7 +172,7 @@ it('requires typed confirmation for --fresh and replaces existing rows', functio
     $database = config('database.connections.testbench.database');
     $question = "This will permanently delete the rows listed above. Type the database name [{$database}] to continue";
 
-    $this->artisan('ai:seed', ['--seed' => 1, '--size' => 'small', '--fresh' => true])
+    $this->artisan('realseed', ['--seed' => 1, '--size' => 'small', '--fresh' => true])
         ->expectsOutputToContain('existing data in these tables will be removed')
         ->expectsQuestion($question, 'wrong')
         ->expectsOutputToContain('No database changes were made.')
@@ -180,7 +180,7 @@ it('requires typed confirmation for --fresh and replaces existing rows', functio
 
     expect(DB::table('organizations')->count())->toBe(3);
 
-    $this->artisan('ai:seed', ['--seed' => 1, '--size' => 'small', '--fresh' => true])
+    $this->artisan('realseed', ['--seed' => 1, '--size' => 'small', '--fresh' => true])
         ->expectsQuestion($question, $database)
         ->assertExitCode(0);
 

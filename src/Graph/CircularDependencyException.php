@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Graph;
+namespace Ayangzy\RealSeed\Graph;
 
 use RuntimeException;
 

@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Tests\Fixtures;
+namespace Ayangzy\RealSeed\Tests\Fixtures;
 
-use AISeeder\AI\AIProviderException;
-use AISeeder\AI\AIProviderInterface;
+use Ayangzy\RealSeed\AI\AIProviderException;
+use Ayangzy\RealSeed\AI\AIProviderInterface;
 
 final class FakeAIProvider implements AIProviderInterface
 {

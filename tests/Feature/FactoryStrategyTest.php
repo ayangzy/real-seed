@@ -1,8 +1,8 @@
 <?php
 
-use AISeeder\Analysis\FactoryAnalyzer;
-use AISeeder\Tests\Fixtures\Factories\UserFactory;
-use AISeeder\Tests\Fixtures\SaasSchema;
+use Ayangzy\RealSeed\Analysis\FactoryAnalyzer;
+use Ayangzy\RealSeed\Tests\Fixtures\Factories\UserFactory;
+use Ayangzy\RealSeed\Tests\Fixtures\SaasSchema;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +16,7 @@ beforeEach(function () {
 
 function seedWith(string $strategy, array $options = []): int
 {
-    return Artisan::call('ai:seed', ['--seed' => 5, '--size' => 'small', '--no-interaction' => true, '--strategy' => $strategy, ...$options]);
+    return Artisan::call('realseed', ['--seed' => 5, '--size' => 'small', '--no-interaction' => true, '--strategy' => $strategy, ...$options]);
 }
 
 it('discovers factories and their states', function () {
@@ -27,7 +27,7 @@ it('discovers factories and their states', function () {
         ->and($factories['users']->states)->toBe(['suspended']);
 });
 
-it('uses factory values in factory mode while AI Seeder owns keys and relationships', function () {
+it('uses factory values in factory mode while RealSeed owns keys and relationships', function () {
     expect(seedWith('factory'))->toBe(0);
 
     $output = Artisan::output();
@@ -64,8 +64,8 @@ it('detects a factory that writes to the database, rolls it back and falls back'
 });
 
 it('applies factory states suggested by the AI', function () {
-    config(['ai-seeder.ai.enabled' => true]);
-    app()->instance(\AISeeder\AI\AIProviderInterface::class, new \AISeeder\Tests\Fixtures\FakeAIProvider([
+    config(['realseed.ai.enabled' => true]);
+    app()->instance(\Ayangzy\RealSeed\AI\AIProviderInterface::class, new \Ayangzy\RealSeed\Tests\Fixtures\FakeAIProvider([
         'domain' => 'x', 'timeline_months' => null,
         'tables' => [['table' => 'users', 'count' => null, 'fields' => [], 'states' => [['name' => 'suspended', 'weight' => 1], ['name' => 'rm -rf', 'weight' => 5]]]],
     ]));

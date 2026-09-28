@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Tests\Fixtures\Models;
+namespace Ayangzy\RealSeed\Tests\Fixtures\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

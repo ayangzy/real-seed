@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Tests\Fixtures\Factories;
+namespace Ayangzy\RealSeed\Tests\Fixtures\Factories;
 
-use AISeeder\Tests\Fixtures\Models\Organization;
-use AISeeder\Tests\Fixtures\Models\User;
+use Ayangzy\RealSeed\Tests\Fixtures\Models\Organization;
+use Ayangzy\RealSeed\Tests\Fixtures\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Generation;
+namespace Ayangzy\RealSeed\Generation;
 
 /**
  * Lightweight, memory-conscious state for one table's rows (existing + generated):

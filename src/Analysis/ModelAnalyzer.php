@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Analysis;
+namespace Ayangzy\RealSeed\Analysis;
 
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;

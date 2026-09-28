@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Generation;
+namespace Ayangzy\RealSeed\Generation;
 
-use AISeeder\Analysis\FactoryInfo;
-use AISeeder\Validation\GenerationException;
+use Ayangzy\RealSeed\Analysis\FactoryInfo;
+use Ayangzy\RealSeed\Validation\GenerationException;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Events\QueryExecuted;
@@ -12,7 +12,7 @@ use Throwable;
 /**
  * Supplies attribute values from a model's Laravel factory, safely.
  *
- * Factory definitions are arbitrary code. AI Seeder passes its own keys for every
+ * Factory definitions are arbitrary code. RealSeed passes its own keys for every
  * reference, so nested factories (e.g. 'team_id' => Team::factory()) are never
  * expanded, and it only calls raw(), which runs no afterMaking/afterCreating hooks.
  * The first row is probed inside a savepoint that is always rolled back: a factory
@@ -48,7 +48,7 @@ final class FactorySource
     /**
      * Factory attributes for one row, limited to real columns of the table.
      *
-     * @param  array<string, mixed>  $overrides  Keys and references chosen by AI Seeder.
+     * @param  array<string, mixed>  $overrides  Keys and references chosen by RealSeed.
      * @return array<string, mixed>|null Null when the factory is unsafe to use.
      */
     public function attributes(array $overrides, ?string $state): ?array

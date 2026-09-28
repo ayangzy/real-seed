@@ -1,11 +1,11 @@
 <?php
 
-namespace AISeeder\Graph;
+namespace Ayangzy\RealSeed\Graph;
 
-use AISeeder\Analysis\ModelInfo;
-use AISeeder\Analysis\RelationInfo;
-use AISeeder\Schema\DatabaseSchema;
-use AISeeder\Schema\TableSchema;
+use Ayangzy\RealSeed\Analysis\ModelInfo;
+use Ayangzy\RealSeed\Analysis\RelationInfo;
+use Ayangzy\RealSeed\Schema\DatabaseSchema;
+use Ayangzy\RealSeed\Schema\TableSchema;
 
 /**
  * The application's relationship graph.

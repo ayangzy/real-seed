@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Extension;
+namespace Ayangzy\RealSeed\Extension;
 
 /**
- * Generates one column's values. Register in config/ai-seeder.php under "generators"
+ * Generates one column's values. Register in config/realseed.php under "generators"
  * by "table.column", "*.column", or "semantic:<semantic>" (most specific wins).
  */
 interface FieldGenerator

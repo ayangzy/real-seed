@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Validation;
+namespace Ayangzy\RealSeed\Validation;
 
 use RuntimeException;
 

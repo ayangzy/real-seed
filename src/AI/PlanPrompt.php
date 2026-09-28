@@ -1,8 +1,8 @@
 <?php
 
-namespace AISeeder\AI;
+namespace Ayangzy\RealSeed\AI;
 
-use AISeeder\Planning\GenerationPlan;
+use Ayangzy\RealSeed\Planning\GenerationPlan;
 
 /**
  * The instructions, prompt, and response schema for AI planning. The AI is asked to

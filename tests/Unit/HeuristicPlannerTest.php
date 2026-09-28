@@ -1,9 +1,9 @@
 <?php
 
-use AISeeder\Planning\GenerationPlan;
-use AISeeder\Planning\HeuristicPlanner;
-use AISeeder\Planning\PlanningException;
-use AISeeder\Planning\PlanOptions;
+use Ayangzy\RealSeed\Planning\GenerationPlan;
+use Ayangzy\RealSeed\Planning\HeuristicPlanner;
+use Ayangzy\RealSeed\Planning\PlanningException;
+use Ayangzy\RealSeed\Planning\PlanOptions;
 use Carbon\CarbonImmutable;
 
 beforeEach(function () {

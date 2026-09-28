@@ -1,12 +1,12 @@
 <?php
 
-namespace AISeeder\AI\Providers;
+namespace Ayangzy\RealSeed\AI\Providers;
 
-use AISeeder\AI\AIProviderException;
-use AISeeder\AI\AIProviderInterface;
+use Ayangzy\RealSeed\AI\AIProviderException;
+use Ayangzy\RealSeed\AI\AIProviderInterface;
 
 /**
- * Used when no AI driver is available; AI Seeder then runs in no-AI mode.
+ * Used when no AI driver is available; RealSeed then runs in no-AI mode.
  */
 final class NullProvider implements AIProviderInterface
 {

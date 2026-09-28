@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Locale;
+namespace Ayangzy\RealSeed\Locale;
 
-use AISeeder\Extension\FieldContext;
-use AISeeder\Semantics\Semantic;
+use Ayangzy\RealSeed\Extension\FieldContext;
+use Ayangzy\RealSeed\Semantics\Semantic;
 
 /**
  * Nigerian names (Faker en_NG), real states and cities that agree with each other,

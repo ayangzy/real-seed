@@ -1,22 +1,22 @@
-# AI Seeder
+# RealSeed
 
 **Realistic, relational, time-coherent synthetic data for your Laravel app, generated from your app's actual structure.**
 
 ```bash
-php artisan ai:seed
+php artisan realseed        # also available as: php artisan ai:seed
 ```
 
-AI Seeder reads your migrated database, models, enums and factories. It then fills local, development and staging databases with data that looks like real usage:
+RealSeed reads your migrated database, models, enums and factories. It then fills local, development and staging databases with data that looks like real usage:
 
 - Organizations have members.
 - A task's assignee works in the same organization as the task's project.
 - Invoices come after subscriptions, and `completed_at` is only set on completed records.
 - A few users are very active and most are occasional.
 
-It is **not** a Faker wrapper. Faker generates values; AI Seeder generates *an application's worth of data* that makes sense together.
+It is **not** a Faker wrapper. Faker generates values; RealSeed generates *an application's worth of data* that makes sense together.
 
 > [!IMPORTANT]
-> AI Seeder is for **local development, development environments, staging, demos, and QA/UAT done on staging**.
+> RealSeed is for **local development, development environments, staging, demos, and QA/UAT done on staging**.
 > It is not a production data tool and refuses to run anywhere except `local`, `dev`, `development` and `staging`, with no override.
 
 ---
@@ -38,7 +38,7 @@ It is **not** a Faker wrapper. Faker generates values; AI Seeder generates *an a
 - [Existing factories](#existing-factories)
 - [Locales](#locales)
 - [Configuration and overrides](#configuration-and-overrides)
-- [Extending AI Seeder](#extending-ai-seeder)
+- [Extending RealSeed](#extending-realseed)
 - [Staging and destructive operations](#staging-and-destructive-operations)
 - [Performance](#performance)
 - [Database support](#database-support)
@@ -81,8 +81,8 @@ AI is used for what it is good at: understanding what your application is, choos
 ## Installation
 
 ```bash
-composer require --dev aiseeder/laravel-ai-seeder   # local development only
-composer require aiseeder/laravel-ai-seeder         # also on staging (deploys often skip dev packages)
+composer require --dev ayangzy/laravel-realseed   # local development only
+composer require ayangzy/laravel-realseed         # also on staging (deploys often skip dev packages)
 ```
 
 Installing it outside `require-dev` is safe: the environment guard, not the install location, keeps it out of production.
@@ -90,7 +90,7 @@ Installing it outside `require-dev` is safe: the environment guard, not the inst
 Publish the config if you want to change the defaults:
 
 ```bash
-php artisan vendor:publish --tag=ai-seeder-config
+php artisan vendor:publish --tag=realseed-config
 ```
 
 To enable AI planning, install and configure the Laravel AI SDK (see its docs for API keys):
@@ -103,12 +103,12 @@ composer require laravel/ai
 
 ```bash
 php artisan migrate
-php artisan ai:seed --dry-run      # see what would be generated
-php artisan ai:seed                # generate it
+php artisan realseed --dry-run      # see what would be generated
+php artisan realseed                # generate it
 ```
 
 ```text
-AI Seeder
+RealSeed
 
 Environment: local
 Database: my_application
@@ -136,7 +136,7 @@ Users
 AI planning: laravel-ai:anthropic/claude-sonnet-5
 
 Asking the AI to plan realistic data...
-✓ AI plan saved to storage/ai-seeder/plans/3f2c9a….json
+✓ AI plan saved to storage/realseed/plans/3f2c9a….json
 Application: A project management tool where agencies track client projects and tasks.
 
 Generation Plan
@@ -158,7 +158,7 @@ This operation will generate synthetic data. Continue? (yes/no) [yes]
 
 ## Environment safety
 
-AI Seeder runs **only** when `APP_ENV` is exactly one of:
+RealSeed runs **only** when `APP_ENV` is exactly one of:
 
 | Environment   | Allowed |
 |---------------|---------|
@@ -173,13 +173,13 @@ AI Seeder runs **only** when `APP_ENV` is exactly one of:
 - **It cannot be bypassed.** There is no `--force` or config setting. The list is a constant in the package, and adding an environment is a package release, not a runtime choice.
 
 ```text
-AI Seeder
+RealSeed
 
 Environment: production
 
-✗ AI Seeder cannot run in this environment.
+✗ RealSeed cannot run in this environment.
 
-AI Seeder only supports:
+RealSeed only supports:
 - local
 - dev
 - development
@@ -188,7 +188,7 @@ AI Seeder only supports:
 No database changes were made.
 ```
 
-The environment name only protects you if it's accurate, so AI Seeder also checks the database it will write to. These checks can only add friction, never remove it:
+The environment name only protects you if it's accurate, so RealSeed also checks the database it will write to. These checks can only add friction, never remove it:
 
 - It **refuses** databases or hosts whose names look like production (`myapp_production`, `db.prod.internal`, `shop-live`).
 - If `APP_ENV=local` but the database host isn't local, it asks you to **type the database name**, and refuses in non-interactive mode.
@@ -212,7 +212,7 @@ The environment name only protects you if it's accurate, so AI Seeder also check
 | `--show-prompt` | Print exactly what would be sent to the AI. |
 | `--fresh` | Delete existing rows in affected tables first (typed confirmation). |
 
-Options combine where they make sense, e.g. `php artisan ai:seed --only=appointments --locale=ng --seed=42 --dry-run`.
+Options combine where they make sense, e.g. `php artisan realseed --only=appointments --locale=ng --seed=42 --dry-run`.
 
 ## Dataset size
 
@@ -229,13 +229,13 @@ Sizes are derived from your relationship graph, not applied per table. Root tabl
 ## Selective seeding
 
 ```bash
-php artisan ai:seed --only=appointments
+php artisan realseed --only=appointments
 ```
 
-If appointments need patients and doctors, AI Seeder reuses the rows already in those tables. Only when a required parent table is empty does it generate the minimum needed (the `small` preset). It never generates the whole database.
+If appointments need patients and doctors, RealSeed reuses the rows already in those tables. Only when a required parent table is empty does it generate the minimum needed (the `small` preset). It never generates the whole database.
 
 ```bash
-php artisan ai:seed --except=users
+php artisan realseed --except=users
 ```
 
 This skips `users`, but fails clearly if other tables require users and the table is empty.
@@ -243,7 +243,7 @@ This skips `users`, but fails clearly if other tables require users and the tabl
 ## Reproducibility
 
 ```bash
-php artisan ai:seed --seed=12345
+php artisan realseed --seed=12345
 ```
 
 The same schema, plan, locale and seed produce identical data:
@@ -257,7 +257,7 @@ Two caveats:
 
 ## AI planning
 
-With `laravel/ai` installed, AI Seeder asks your configured model (Anthropic, OpenAI, Gemini, Ollama and others) to plan the data. The AI returns:
+With `laravel/ai` installed, RealSeed asks your configured model (Anthropic, OpenAI, Gemini, Ollama and others) to plan the data. The AI returns:
 
 - a one-line understanding of what the application does
 - realistic row counts and history length
@@ -267,20 +267,20 @@ With `laravel/ai` installed, AI Seeder asks your configured model (Anthropic, Op
 - factory state mixes
 
 ```php
-// config/ai-seeder.php
+// config/realseed.php
 'ai' => [
-    'enabled' => env('AI_SEEDER_AI_ENABLED', true),
+    'enabled' => env('REALSEED_AI_ENABLED', true),
     'driver' => 'laravel-ai',        // or your own AIProviderInterface class
-    'provider' => env('AI_SEEDER_AI_PROVIDER'),   // anthropic, openai, gemini, ollama, ... (null = laravel/ai default)
-    'model' => env('AI_SEEDER_AI_MODEL'),
+    'provider' => env('REALSEED_AI_PROVIDER'),   // anthropic, openai, gemini, ollama, ... (null = laravel/ai default)
+    'model' => env('REALSEED_AI_MODEL'),
     'timeout' => 120,
 ],
 ```
 
-**What is sent:** only structure. That means table and column names, types, nullability, uniqueness, foreign keys, enum values, cast types, column comments, model class names, factory state names and the baseline plan. **Row data is never read for the prompt**, so a staging database restored from production can't leak through AI Seeder. To see the exact prompt:
+**What is sent:** only structure. That means table and column names, types, nullability, uniqueness, foreign keys, enum values, cast types, column comments, model class names, factory state names and the baseline plan. **Row data is never read for the prompt**, so a staging database restored from production can't leak through RealSeed. To see the exact prompt:
 
 ```bash
-php artisan ai:seed --dry-run --show-prompt
+php artisan realseed --dry-run --show-prompt
 ```
 
 To keep a column out of the prompt entirely, add it to `excluded_columns` (it must be nullable or have a default).
@@ -295,14 +295,14 @@ To keep a column out of the prompt entirely, add it to `excluded_columns` (it mu
 
 Run with `-v` to see what was ignored.
 
-**Saved plans:** AI suggestions are saved as JSON in `storage/ai-seeder/plans` (or `plans_path`) and reused while the schema and options don't change. Re-runs are therefore free, fast and reproducible. Commit the folder to share datasets with your team, and use `--replan` to get a fresh plan. Saved files are re-validated on every use.
+**Saved plans:** AI suggestions are saved as JSON in `storage/realseed/plans` (or `plans_path`) and reused while the schema and options don't change. Re-runs are therefore free, fast and reproducible. Commit the folder to share datasets with your team, and use `--replan` to get a fresh plan. Saved files are re-validated on every use.
 
-If the AI call fails, AI Seeder says so and continues with heuristics. The exception is a free-text `--scenario`, which can't be honoured without the AI, so the run stops.
+If the AI call fails, RealSeed says so and continues with heuristics. The exception is a free-text `--scenario`, which can't be honoured without the AI, so the run stops.
 
 ## No-AI mode
 
 ```bash
-php artisan ai:seed --no-ai
+php artisan realseed --no-ai
 ```
 
 This mode needs no AI package or network access. It uses schema analysis, relationships, field inference (`first_name`, `email`, `price`, `*_at`, `status`, …), enum-aware distributions, workflow linking (`completed_at` ↔ `status`), your factories, and your configuration. It's also what runs when no AI provider is available.
@@ -312,26 +312,26 @@ This mode needs no AI package or network access. It uses schema analysis, relati
 Free text (requires AI):
 
 ```bash
-php artisan ai:seed --scenario="busy hospital with six months of appointment history"
-php artisan ai:seed --scenario="property marketplace with active listings"
+php artisan realseed --scenario="busy hospital with six months of appointment history"
+php artisan realseed --scenario="property marketplace with active listings"
 ```
 
 Named scenarios are reusable code that works without AI. See [ScenarioProvider](#scenario-providers).
 
 ```bash
-php artisan ai:seed --scenario=demo
+php artisan realseed --scenario=demo
 ```
 
 ## Existing factories
 
 ```bash
-php artisan ai:seed --strategy=factory   # factory values for every column a factory defines
-php artisan ai:seed --strategy=hybrid    # factories for basic values; AI Seeder for distributions and timelines
+php artisan realseed --strategy=factory   # factory values for every column a factory defines
+php artisan realseed --strategy=hybrid    # factories for basic values; RealSeed for distributions and timelines
 ```
 
-In both modes AI Seeder owns keys, relationships, counts and ordering. In `hybrid` mode it also keeps enum distributions, timestamps and anything refined by AI or config. Tables without a factory are generated normally.
+In both modes RealSeed owns keys, relationships, counts and ordering. In `hybrid` mode it also keeps enum distributions, timestamps and anything refined by AI or config. Tables without a factory are generated normally.
 
-Factories are arbitrary code, so AI Seeder runs them defensively:
+Factories are arbitrary code, so RealSeed runs them defensively:
 - **Nested factories are never expanded.** Every reference column is overridden before `raw()` runs, so `'team_id' => Team::factory()` is replaced, not executed.
 - **Hooks never run.** Only `raw()` is called, so `afterMaking` and `afterCreating` callbacks are skipped.
 - **Writes are caught.** The first row is probed inside a savepoint that is always rolled back. If the factory writes to the database, it's reported and not used for that table.
@@ -346,7 +346,7 @@ Factory states are discovered, and the AI or your config can mix them:
 ## Locales
 
 ```bash
-php artisan ai:seed --locale=ng
+php artisan realseed --locale=ng
 ```
 
 | Code | Faker locale | Currency |
@@ -358,7 +358,7 @@ php artisan ai:seed --locale=ng
 
 With `--locale=ng`, a contact in `Ikeja` is in `Lagos`, phones look like `0803 123 4567` or `+234 803 123 4567`, and currency columns hold `NGN`.
 
-All data is synthetic. Emails use reserved domains (`example.com`, `example.org`, `example.net`), and AI Seeder never looks up or imports real people's information.
+All data is synthetic. Emails use reserved domains (`example.com`, `example.org`, `example.net`), and RealSeed never looks up or imports real people's information.
 
 ## Configuration and overrides
 
@@ -381,7 +381,7 @@ Your configuration beats heuristics and AI, but never safety:
 
 | Field rule | Meaning |
 |---|---|
-| `semantic` | What the column holds (`person.first_name`, `number.money`, `text.title`, …; see `AISeeder\Semantics\Semantic`) |
+| `semantic` | What the column holds (`person.first_name`, `number.money`, `text.title`, …; see `Ayangzy\RealSeed\Semantics\Semantic`) |
 | `weights` | Value proportions for enum-like columns |
 | `samples` | Example values to draw from |
 | `null_rate` / `true_rate` | Share of nulls / true values |
@@ -400,15 +400,15 @@ Other settings:
 | `size`, `strategy`, `locale`, `currency` | Defaults for the CLI options |
 | `chunk_size`, `existing_rows_limit`, `max_rows` | Performance and safety limits |
 
-## Extending AI Seeder
+## Extending RealSeed
 
-Register extensions in `config/ai-seeder.php`. Classes are resolved from the container and checked before any database work. Use the `$random` and `$faker` you're given to keep output reproducible.
+Register extensions in `config/realseed.php`. Classes are resolved from the container and checked before any database work. Use the `$random` and `$faker` you're given to keep output reproducible.
 
 ### Field generators
 
 ```php
-use AISeeder\Extension\FieldContext;
-use AISeeder\Extension\FieldGenerator;
+use Ayangzy\RealSeed\Extension\FieldContext;
+use Ayangzy\RealSeed\Extension\FieldGenerator;
 
 class InvoiceNumberGenerator implements FieldGenerator
 {
@@ -423,7 +423,7 @@ class InvoiceNumberGenerator implements FieldGenerator
 
 ### Row generators
 
-Row generators work like a factory definition for one table. Keys and references always stay with AI Seeder.
+Row generators work like a factory definition for one table. Keys and references always stay with RealSeed.
 
 ```php
 'row_generators' => ['products' => ProductRowGenerator::class],
@@ -434,8 +434,8 @@ Row generators work like a factory definition for one table. Keys and references
 A reference picker chooses which parent a reference points to, among candidates that are already scoped to the same tenant:
 
 ```php
-use AISeeder\Extension\ReferenceContext;
-use AISeeder\Extension\ReferencePicker;
+use Ayangzy\RealSeed\Extension\ReferenceContext;
+use Ayangzy\RealSeed\Extension\ReferencePicker;
 
 class SeniorReviewerPicker implements ReferencePicker
 {
@@ -451,7 +451,7 @@ class SeniorReviewerPicker implements ReferencePicker
 ### Scenario providers
 
 ```php
-use AISeeder\Extension\ScenarioProvider;
+use Ayangzy\RealSeed\Extension\ScenarioProvider;
 
 class DemoScenario implements ScenarioProvider
 {
@@ -466,7 +466,7 @@ class DemoScenario implements ScenarioProvider
     }
 }
 
-// 'scenarios' => ['demo' => DemoScenario::class]   →   php artisan ai:seed --scenario=demo
+// 'scenarios' => ['demo' => DemoScenario::class]   →   php artisan realseed --scenario=demo
 ```
 
 ### Application analyzers
@@ -480,30 +480,30 @@ Application analyzers add your domain knowledge to every plan, before the AI see
 ### Locales
 
 ```php
-use AISeeder\Locale\FakerLocale;
+use Ayangzy\RealSeed\Locale\FakerLocale;
 
 class KenyaLocale extends FakerLocale
 {
     public function __construct() { parent::__construct('en_US', 'KES'); }
 
-    public function value(string $semantic, \AISeeder\Extension\FieldContext $context): mixed
+    public function value(string $semantic, \Ayangzy\RealSeed\Extension\FieldContext $context): mixed
     {
-        return $semantic === \AISeeder\Semantics\Semantic::CITY
+        return $semantic === \Ayangzy\RealSeed\Semantics\Semantic::CITY
             ? $context->random->pick(['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru'])
             : null;
     }
 }
 
-// 'locales' => ['ke' => KenyaLocale::class]   →   php artisan ai:seed --locale=ke
+// 'locales' => ['ke' => KenyaLocale::class]   →   php artisan realseed --locale=ke
 ```
 
 ### AI providers
 
-Implement `AISeeder\AI\AIProviderInterface` (instructions + prompt + JSON Schema in, decoded object out) and set `ai.driver` to your class to use any model without `laravel/ai`.
+Implement `Ayangzy\RealSeed\AI\AIProviderInterface` (instructions + prompt + JSON Schema in, decoded object out) and set `ai.driver` to your class to use any model without `laravel/ai`.
 
 ## Staging and destructive operations
 
-On staging, AI Seeder adds to existing data by default. Non-interactive runs (`--no-interaction`) are allowed because they only add rows.
+On staging, RealSeed adds to existing data by default. Non-interactive runs (`--no-interaction`) are allowed because they only add rows.
 
 `--fresh` deletes before generating:
 
@@ -527,17 +527,17 @@ Measured with the included benchmark (`vendor/bin/pest --group=benchmark`), abou
 | SQLite | ~11 s | 72 MB |
 | MySQL 8.0 | ~16 s | 72 MB |
 
-Because inserts bypass Eloquent, **model events and observers don't fire**. AI Seeder applies the storage side of casts itself: JSON, dates, and enums, plus encrypted casts using your `APP_KEY`.
+Because inserts bypass Eloquent, **model events and observers don't fire**. RealSeed applies the storage side of casts itself: JSON, dates, and enums, plus encrypted casts using your `APP_KEY`.
 
 ## Database support
 
-The schema is read through Laravel's schema builder, so AI Seeder works with every driver Laravel supports. Enum-style `CHECK` constraints (created by `$table->enum()`) are read per driver: SQLite and PostgreSQL through their catalogs, MySQL/MariaDB from the column type, and SQL Server on a best-effort basis. Database-specific behaviour, such as PostgreSQL sequence resets and SQL Server identity inserts, is isolated in the executor.
+The schema is read through Laravel's schema builder, so RealSeed works with every driver Laravel supports. Enum-style `CHECK` constraints (created by `$table->enum()`) are read per driver: SQLite and PostgreSQL through their catalogs, MySQL/MariaDB from the column type, and SQL Server on a best-effort basis. Database-specific behaviour, such as PostgreSQL sequence resets and SQL Server identity inserts, is isolated in the executor.
 
 ## Limitations
 
 - **Composite foreign keys** aren't generated. Nullable ones are left null, and tables that require one are skipped with a note.
-- **Polymorphic relations** need a model that declares `morphMany`/`morphOne`/`morphToMany`, so AI Seeder knows the target types.
-- **A cycle made only of required foreign keys** can't be inserted by anyone. AI Seeder names the tables and stops.
+- **Polymorphic relations** need a model that declares `morphMany`/`morphOne`/`morphToMany`, so RealSeed knows the target types.
+- **A cycle made only of required foreign keys** can't be inserted by anyone. RealSeed names the tables and stops.
 - **Observers and model events** don't fire (see [Performance](#performance)).
 - **Generated users' password** is `password`.
 
@@ -545,13 +545,13 @@ The schema is read through Laravel's schema builder, so AI Seeder works with eve
 
 | Message | What to do |
 |---|---|
-| `AI Seeder cannot run in this environment` | Set `APP_ENV` to `local`, `dev`, `development` or `staging`. There is no override. |
+| `RealSeed cannot run in this environment` | Set `APP_ENV` to `local`, `dev`, `development` or `staging`. There is no override. |
 | `looks like a production database` | You're pointing at something named like production. Point at a non-production database. |
-| `N of M migrations have not been run` | Run `php artisan migrate`. AI Seeder reads the migrated schema. |
+| `N of M migrations have not been run` | Run `php artisan migrate`. RealSeed reads the migrated schema. |
 | `Cannot skip [x]: other tables require it` | Seed `x` first, or don't `--except` it. |
 | `Tables [a, b] reference each other through required foreign keys` | Make one of the columns nullable, or exclude a table. |
 | `--scenario needs AI planning` | Install and configure `laravel/ai`, or use a named scenario. |
-| `AI planning failed (...)` | Check your `laravel/ai` credentials and model. AI Seeder continued with heuristics. |
+| `AI planning failed (...)` | Check your `laravel/ai` credentials and model. RealSeed continued with heuristics. |
 | `... was not used for [table]: its definition writes to the database` | That factory creates records while it's being defined. Fix it, or use `--strategy=ai`. |
 | `rows skipped after repeated unique-constraint collisions` | A unique column has too few possible values; give it `samples` or a custom generator. |
 
@@ -562,8 +562,8 @@ For more detail, run with `-v`.
 ```bash
 composer install
 vendor/bin/pest                                  # SQLite in memory
-AI_SEEDER_TEST_DRIVER=mysql DB_PASSWORD=secret vendor/bin/pest
-AI_SEEDER_TEST_DRIVER=pgsql DB_USERNAME=postgres DB_PASSWORD=secret vendor/bin/pest
+REALSEED_TEST_DRIVER=mysql DB_PASSWORD=secret vendor/bin/pest
+REALSEED_TEST_DRIVER=pgsql DB_USERNAME=postgres DB_PASSWORD=secret vendor/bin/pest
 vendor/bin/pest --group=benchmark                # 100k rows
 ```
 

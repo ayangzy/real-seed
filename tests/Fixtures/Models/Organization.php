@@ -1,8 +1,8 @@
 <?php
 
-namespace AISeeder\Tests\Fixtures\Models;
+namespace Ayangzy\RealSeed\Tests\Fixtures\Models;
 
-use AISeeder\Tests\Fixtures\Factories\OrganizationFactory;
+use Ayangzy\RealSeed\Tests\Fixtures\Factories\OrganizationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

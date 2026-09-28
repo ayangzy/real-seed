@@ -1,11 +1,11 @@
 <?php
 
-namespace AISeeder\Locale;
+namespace Ayangzy\RealSeed\Locale;
 
-use AISeeder\Extension\FieldContext;
+use Ayangzy\RealSeed\Extension\FieldContext;
 
 /**
- * Locale-aware synthetic data. Register custom locales in config/ai-seeder.php under
+ * Locale-aware synthetic data. Register custom locales in config/realseed.php under
  * "locales", e.g. 'ke' => App\Seeding\KenyaLocale::class, then run --locale=ke.
  */
 interface LocaleProvider

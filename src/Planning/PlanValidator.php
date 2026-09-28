@@ -1,12 +1,12 @@
 <?php
 
-namespace AISeeder\Planning;
+namespace Ayangzy\RealSeed\Planning;
 
-use AISeeder\AI\ApplicationContext;
-use AISeeder\Analysis\ProjectAnalysis;
-use AISeeder\Graph\DependencyResolver;
-use AISeeder\Schema\ColumnSchema;
-use AISeeder\Semantics\Semantic;
+use Ayangzy\RealSeed\AI\ApplicationContext;
+use Ayangzy\RealSeed\Analysis\ProjectAnalysis;
+use Ayangzy\RealSeed\Graph\DependencyResolver;
+use Ayangzy\RealSeed\Schema\ColumnSchema;
+use Ayangzy\RealSeed\Semantics\Semantic;
 
 /**
  * Merges AI suggestions onto the heuristic baseline plan.

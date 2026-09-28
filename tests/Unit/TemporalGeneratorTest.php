@@ -1,7 +1,7 @@
 <?php
 
-use AISeeder\Generation\SeededRandom;
-use AISeeder\Generation\TemporalGenerator;
+use Ayangzy\RealSeed\Generation\SeededRandom;
+use Ayangzy\RealSeed\Generation\TemporalGenerator;
 
 beforeEach(function () {
     $this->time = new TemporalGenerator(1_000_000, 2_000_000);

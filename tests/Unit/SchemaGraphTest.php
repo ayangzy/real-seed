@@ -1,6 +1,6 @@
 <?php
 
-use AISeeder\Graph\Edge;
+use Ayangzy\RealSeed\Graph\Edge;
 
 beforeEach(function () {
     $this->analysis = analyzeSaasFixture();
@@ -25,9 +25,9 @@ it('detects polymorphic slots and their targets', function () {
     [$taggables] = $this->graph->morphSlots('taggables');
 
     expect($comments->targets)->toBe([
-        \AISeeder\Tests\Fixtures\Models\Project::class => 'projects',
-        \AISeeder\Tests\Fixtures\Models\Task::class => 'tasks',
-    ])->and($taggables->targets)->toBe([\AISeeder\Tests\Fixtures\Models\Project::class => 'projects']);
+        \Ayangzy\RealSeed\Tests\Fixtures\Models\Project::class => 'projects',
+        \Ayangzy\RealSeed\Tests\Fixtures\Models\Task::class => 'tasks',
+    ])->and($taggables->targets)->toBe([\Ayangzy\RealSeed\Tests\Fixtures\Models\Project::class => 'projects']);
 });
 
 it('detects pivot tables', function () {

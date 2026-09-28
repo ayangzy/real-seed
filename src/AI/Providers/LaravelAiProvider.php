@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\AI\Providers;
+namespace Ayangzy\RealSeed\AI\Providers;
 
-use AISeeder\AI\AIProviderException;
-use AISeeder\AI\AIProviderInterface;
+use Ayangzy\RealSeed\AI\AIProviderException;
+use Ayangzy\RealSeed\AI\AIProviderInterface;
 use Closure;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Throwable;

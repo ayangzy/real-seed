@@ -1,5 +1,5 @@
 {
-    "name": "aiseeder/laravel-ai-seeder",
+    "name": "ayangzy/laravel-realseed",
     "description": "Generate realistic, relational, temporally coherent synthetic data for non-production Laravel environments.",
     "keywords": [
         "laravel",
@@ -29,18 +29,18 @@
     },
     "autoload": {
         "psr-4": {
-            "AISeeder\\": "src/"
+            "Ayangzy\\RealSeed\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "AISeeder\\Tests\\": "tests/"
+            "Ayangzy\\RealSeed\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "AISeeder\\AISeederServiceProvider"
+                "Ayangzy\\RealSeed\\RealSeedServiceProvider"
             ]
         }
     },

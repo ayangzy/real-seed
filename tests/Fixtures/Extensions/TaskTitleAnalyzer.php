@@ -1,10 +1,10 @@
 <?php
 
-namespace AISeeder\Tests\Fixtures\Extensions;
+namespace Ayangzy\RealSeed\Tests\Fixtures\Extensions;
 
-use AISeeder\Analysis\ProjectAnalysis;
-use AISeeder\Extension\ApplicationAnalyzer;
-use AISeeder\Planning\GenerationPlan;
+use Ayangzy\RealSeed\Analysis\ProjectAnalysis;
+use Ayangzy\RealSeed\Extension\ApplicationAnalyzer;
+use Ayangzy\RealSeed\Planning\GenerationPlan;
 
 class TaskTitleAnalyzer implements ApplicationAnalyzer
 {

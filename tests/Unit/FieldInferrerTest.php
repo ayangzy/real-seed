@@ -1,7 +1,7 @@
 <?php
 
-use AISeeder\Semantics\FieldInferrer;
-use AISeeder\Semantics\Semantic;
+use Ayangzy\RealSeed\Semantics\FieldInferrer;
+use Ayangzy\RealSeed\Semantics\Semantic;
 
 beforeEach(function () {
     $this->analysis = analyzeSaasFixture();

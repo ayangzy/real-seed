@@ -1,8 +1,8 @@
 <?php
 
-use AISeeder\AI\AIProviderInterface;
-use AISeeder\Tests\Fixtures\FakeAIProvider;
-use AISeeder\Tests\Fixtures\SaasSchema;
+use Ayangzy\RealSeed\AI\AIProviderInterface;
+use Ayangzy\RealSeed\Tests\Fixtures\FakeAIProvider;
+use Ayangzy\RealSeed\Tests\Fixtures\SaasSchema;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +35,7 @@ function field(string $column, ?string $semantic = null, ?array $samples = null,
 
 function useAi(array|Throwable $response): FakeAIProvider
 {
-    config(['ai-seeder.ai.enabled' => true]);
+    config(['realseed.ai.enabled' => true]);
     app()->instance(AIProviderInterface::class, $fake = new FakeAIProvider($response));
 
     return $fake;
@@ -43,7 +43,7 @@ function useAi(array|Throwable $response): FakeAIProvider
 
 function runSeeder(array $options = []): int
 {
-    return Artisan::call('ai:seed', ['--seed' => 7, '--size' => 'small', '--no-interaction' => true, ...$options]);
+    return Artisan::call('realseed', ['--seed' => 7, '--size' => 'small', '--no-interaction' => true, ...$options]);
 }
 
 beforeEach(function () {
@@ -176,7 +176,7 @@ it('neutralises hostile or invalid AI output', function () {
 });
 
 it('caps the total rows', function () {
-    config(['ai-seeder.max_rows' => 100]);
+    config(['realseed.max_rows' => 100]);
     useAi(suggestions(['tables' => [['table' => 'comments', 'count' => 100000, 'fields' => []]]]));
 
     runSeeder();

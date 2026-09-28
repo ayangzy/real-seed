@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Graph;
+namespace Ayangzy\RealSeed\Graph;
 
 /**
  * Orders tables so every parent is inserted before its children.

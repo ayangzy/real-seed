@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Locale;
+namespace Ayangzy\RealSeed\Locale;
 
 use Illuminate\Contracts\Container\Container;
 use InvalidArgumentException;
@@ -53,6 +53,6 @@ final class LocaleRegistry
             return new FakerLocale($m[1].'_'.strtoupper($m[2]), $this->currency);
         }
 
-        throw new InvalidArgumentException("Unknown locale [{$code}]. Use a country code such as ng, us or gb, a Faker locale such as pt_BR, or register one in config/ai-seeder.php.");
+        throw new InvalidArgumentException("Unknown locale [{$code}]. Use a country code such as ng, us or gb, a Faker locale such as pt_BR, or register one in config/realseed.php.");
     }
 }

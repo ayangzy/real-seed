@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Analysis;
+namespace Ayangzy\RealSeed\Analysis;
 
-use AISeeder\Graph\SchemaGraph;
-use AISeeder\Schema\DatabaseSchema;
+use Ayangzy\RealSeed\Graph\SchemaGraph;
+use Ayangzy\RealSeed\Schema\DatabaseSchema;
 
 final readonly class ProjectAnalysis
 {

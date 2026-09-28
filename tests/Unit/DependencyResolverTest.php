@@ -1,9 +1,9 @@
 <?php
 
-use AISeeder\Graph\CircularDependencyException;
-use AISeeder\Graph\DependencyResolver;
-use AISeeder\Graph\SchemaGraph;
-use AISeeder\Schema\SchemaReader;
+use Ayangzy\RealSeed\Graph\CircularDependencyException;
+use Ayangzy\RealSeed\Graph\DependencyResolver;
+use Ayangzy\RealSeed\Graph\SchemaGraph;
+use Ayangzy\RealSeed\Schema\SchemaReader;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 

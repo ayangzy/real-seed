@@ -1,9 +1,9 @@
 <?php
 
-use AISeeder\Planning\HeuristicPlanner;
-use AISeeder\Planning\PlanOptions;
-use AISeeder\Planning\PlanValidator;
-use AISeeder\Semantics\Semantic;
+use Ayangzy\RealSeed\Planning\HeuristicPlanner;
+use Ayangzy\RealSeed\Planning\PlanOptions;
+use Ayangzy\RealSeed\Planning\PlanValidator;
+use Ayangzy\RealSeed\Semantics\Semantic;
 use Carbon\CarbonImmutable;
 
 beforeEach(function () {

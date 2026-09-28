@@ -1,10 +1,10 @@
 <?php
 
-namespace AISeeder\Tests\Fixtures\Extensions;
+namespace Ayangzy\RealSeed\Tests\Fixtures\Extensions;
 
-use AISeeder\Extension\FieldContext;
-use AISeeder\Locale\FakerLocale;
-use AISeeder\Semantics\Semantic;
+use Ayangzy\RealSeed\Extension\FieldContext;
+use Ayangzy\RealSeed\Locale\FakerLocale;
+use Ayangzy\RealSeed\Semantics\Semantic;
 
 class MoonLocale extends FakerLocale
 {

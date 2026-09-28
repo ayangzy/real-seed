@@ -1,7 +1,7 @@
 <?php
 
-use AISeeder\Environment\ConnectionSafetyCheck;
-use AISeeder\Environment\TargetDatabase;
+use Ayangzy\RealSeed\Environment\ConnectionSafetyCheck;
+use Ayangzy\RealSeed\Environment\TargetDatabase;
 
 function target(string $database, ?string $host = '127.0.0.1', string $driver = 'mysql'): TargetDatabase
 {

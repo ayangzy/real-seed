@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Generation;
+namespace Ayangzy\RealSeed\Generation;
 
 /**
  * Places rows and their timestamps on a shared timeline so history reads coherently:

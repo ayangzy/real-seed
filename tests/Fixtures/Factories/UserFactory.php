@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Tests\Fixtures\Factories;
+namespace Ayangzy\RealSeed\Tests\Fixtures\Factories;
 
-use AISeeder\Tests\Fixtures\Models\Organization;
-use AISeeder\Tests\Fixtures\Models\User;
+use Ayangzy\RealSeed\Tests\Fixtures\Models\Organization;
+use Ayangzy\RealSeed\Tests\Fixtures\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class UserFactory extends Factory
@@ -15,7 +15,7 @@ class UserFactory extends Factory
         $first = fake()->randomElement(['Ada', 'Grace', 'Katherine', 'Hedy']);
 
         return [
-            // Nested factory: AI Seeder must override it instead of letting it create an organization.
+            // Nested factory: RealSeed must override it instead of letting it create an organization.
             'organization_id' => Organization::factory(),
             'first_name' => $first,
             'last_name' => 'Factoryson',

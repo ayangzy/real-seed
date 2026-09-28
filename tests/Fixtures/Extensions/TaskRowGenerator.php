@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Tests\Fixtures\Extensions;
+namespace Ayangzy\RealSeed\Tests\Fixtures\Extensions;
 
-use AISeeder\Extension\RowGenerator;
-use AISeeder\Generation\SeededRandom;
+use Ayangzy\RealSeed\Extension\RowGenerator;
+use Ayangzy\RealSeed\Generation\SeededRandom;
 use Carbon\CarbonImmutable;
 use Faker\Generator as Faker;
 

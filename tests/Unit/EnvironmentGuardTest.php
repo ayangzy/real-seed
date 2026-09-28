@@ -1,7 +1,7 @@
 <?php
 
-use AISeeder\Environment\EnvironmentGuard;
-use AISeeder\Environment\UnsupportedEnvironmentException;
+use Ayangzy\RealSeed\Environment\EnvironmentGuard;
+use Ayangzy\RealSeed\Environment\UnsupportedEnvironmentException;
 
 it('allows supported environments', function (string $environment) {
     $this->setEnvironment($environment);
@@ -37,7 +37,7 @@ it('rejects when the environment binding is missing', function () {
 });
 
 it('keeps the allowlist out of configuration', function () {
-    config(['ai-seeder.allowed_environments' => ['production']]);
+    config(['realseed.allowed_environments' => ['production']]);
     $this->setEnvironment('production');
 
     expect(app(EnvironmentGuard::class)->isSupported())->toBeFalse();

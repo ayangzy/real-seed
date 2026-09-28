@@ -1,8 +1,8 @@
 <?php
 
-use AISeeder\AI\AIProviderException;
-use AISeeder\AI\PlanPrompt;
-use AISeeder\AI\Providers\LaravelAiProvider;
+use Ayangzy\RealSeed\AI\AIProviderException;
+use Ayangzy\RealSeed\AI\PlanPrompt;
+use Ayangzy\RealSeed\AI\Providers\LaravelAiProvider;
 use Laravel\Ai\AiServiceProvider;
 use Laravel\Ai\StructuredAnonymousAgent;
 

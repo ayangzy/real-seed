@@ -1,7 +1,7 @@
 <?php
 
-use AISeeder\Schema\SchemaReader;
-use AISeeder\Tests\Fixtures\SaasSchema;
+use Ayangzy\RealSeed\Schema\SchemaReader;
+use Ayangzy\RealSeed\Tests\Fixtures\SaasSchema;
 
 beforeEach(function () {
     SaasSchema::create();
@@ -49,7 +49,7 @@ it('produces a stable hash that changes with the structure', function () {
 });
 
 it('parses MySQL enum column types', function () {
-    $column = \AISeeder\Schema\ColumnSchema::fromArray([
+    $column = \Ayangzy\RealSeed\Schema\ColumnSchema::fromArray([
         'name' => 'status', 'type_name' => 'enum', 'type' => "enum('a','it''s','c')",
         'nullable' => false, 'default' => null, 'auto_increment' => false, 'comment' => null, 'generation' => null,
     ]);

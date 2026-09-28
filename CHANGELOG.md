@@ -4,7 +4,7 @@
 
 Initial release.
 
-- `php artisan ai:seed` with a fail-closed environment allowlist (local, dev, development, staging) and production-looking database detection.
+- `php artisan realseed` with a fail-closed environment allowlist (local, dev, development, staging) and production-looking database detection.
 - Analysis of the live schema, models, enums, factories and migrations; relationship graph with dependency ordering and cycle handling.
 - Deterministic, reproducible generation: scope-consistent relationships, coherent timelines, workflow-aware timestamps, unique-safe values, parent coverage.
 - AI planning through the Laravel AI SDK or any `AIProviderInterface`, with validated, cached plans and structure-only prompts.

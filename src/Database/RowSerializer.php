@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Database;
+namespace Ayangzy\RealSeed\Database;
 
-use AISeeder\Analysis\ModelInfo;
-use AISeeder\Schema\TableSchema;
+use Ayangzy\RealSeed\Analysis\ModelInfo;
+use Ayangzy\RealSeed\Schema\TableSchema;
 use BackedEnum;
 use DateTimeInterface;
 use Illuminate\Contracts\Encryption\Encrypter;

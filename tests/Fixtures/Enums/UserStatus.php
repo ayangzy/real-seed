@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Tests\Fixtures\Enums;
+namespace Ayangzy\RealSeed\Tests\Fixtures\Enums;
 
 enum UserStatus: string
 {

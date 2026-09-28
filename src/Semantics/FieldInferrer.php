@@ -1,12 +1,12 @@
 <?php
 
-namespace AISeeder\Semantics;
+namespace Ayangzy\RealSeed\Semantics;
 
-use AISeeder\Analysis\EnumInfo;
-use AISeeder\Analysis\ProjectAnalysis;
-use AISeeder\Planning\FieldPlan;
-use AISeeder\Schema\ColumnSchema;
-use AISeeder\Schema\TableSchema;
+use Ayangzy\RealSeed\Analysis\EnumInfo;
+use Ayangzy\RealSeed\Analysis\ProjectAnalysis;
+use Ayangzy\RealSeed\Planning\FieldPlan;
+use Ayangzy\RealSeed\Schema\ColumnSchema;
+use Ayangzy\RealSeed\Schema\TableSchema;
 use Illuminate\Support\Str;
 
 /**

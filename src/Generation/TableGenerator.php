@@ -1,14 +1,14 @@
 <?php
 
-namespace AISeeder\Generation;
+namespace Ayangzy\RealSeed\Generation;
 
-use AISeeder\Extension\ExtensionRegistry;
-use AISeeder\Graph\Edge;
-use AISeeder\Planning\FieldPlan;
-use AISeeder\Planning\TablePlan;
-use AISeeder\Schema\ColumnSchema;
-use AISeeder\Schema\TableSchema;
-use AISeeder\Semantics\Semantic;
+use Ayangzy\RealSeed\Extension\ExtensionRegistry;
+use Ayangzy\RealSeed\Graph\Edge;
+use Ayangzy\RealSeed\Planning\FieldPlan;
+use Ayangzy\RealSeed\Planning\TablePlan;
+use Ayangzy\RealSeed\Schema\ColumnSchema;
+use Ayangzy\RealSeed\Schema\TableSchema;
+use Ayangzy\RealSeed\Semantics\Semantic;
 use Carbon\CarbonImmutable;
 use Generator;
 

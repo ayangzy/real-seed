@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Environment;
+namespace Ayangzy\RealSeed\Environment;
 
 use Illuminate\Contracts\Foundation\Application;
 

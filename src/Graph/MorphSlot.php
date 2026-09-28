@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Graph;
+namespace Ayangzy\RealSeed\Graph;
 
 /**
  * A polymorphic reference: a {name}_type / {name}_id column pair.

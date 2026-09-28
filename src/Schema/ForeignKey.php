@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Schema;
+namespace Ayangzy\RealSeed\Schema;
 
 final readonly class ForeignKey
 {

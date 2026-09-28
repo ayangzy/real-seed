@@ -7,14 +7,14 @@ return [
     | Database Connection
     |--------------------------------------------------------------------------
     |
-    | The connection AI Seeder writes to. Null uses the application's default.
+    | The connection RealSeed writes to. Null uses the application's default.
     |
     | Note: the supported environments (local, dev, development, staging) are
     | enforced by the package itself and intentionally cannot be configured.
     |
     */
 
-    'connection' => env('AI_SEEDER_CONNECTION'),
+    'connection' => env('REALSEED_CONNECTION'),
 
     /*
     |--------------------------------------------------------------------------
@@ -27,21 +27,21 @@ return [
     |
     | driver:   "laravel-ai" uses the Laravel AI SDK (composer require laravel/ai),
     |           configured in config/ai.php. Or the class name of your own
-    |           AISeeder\AI\AIProviderInterface implementation.
+    |           Ayangzy\RealSeed\AI\AIProviderInterface implementation.
     | provider: laravel/ai provider name (anthropic, openai, gemini, ollama, ...);
     |           null uses the laravel/ai default.
     | model:    model name; null uses the provider default.
     |
-    | Without an available provider, or with --no-ai, AI Seeder uses its
+    | Without an available provider, or with --no-ai, RealSeed uses its
     | built-in heuristics.
     |
     */
 
     'ai' => [
-        'enabled' => env('AI_SEEDER_AI_ENABLED', true),
-        'driver' => env('AI_SEEDER_AI_DRIVER', 'laravel-ai'),
-        'provider' => env('AI_SEEDER_AI_PROVIDER'),
-        'model' => env('AI_SEEDER_AI_MODEL'),
+        'enabled' => env('REALSEED_AI_ENABLED', true),
+        'driver' => env('REALSEED_AI_DRIVER', 'laravel-ai'),
+        'provider' => env('REALSEED_AI_PROVIDER'),
+        'model' => env('REALSEED_AI_MODEL'),
         'timeout' => 120,
     ],
 
@@ -53,11 +53,11 @@ return [
     | AI plans are saved here as JSON and reused while the schema, scenario and
     | options are unchanged (use --replan to refresh). Commit the directory to
     | share reproducible datasets with your team. Null uses
-    | storage/ai-seeder/plans.
+    | storage/realseed/plans.
     |
     */
 
-    'plans_path' => env('AI_SEEDER_PLANS_PATH'),
+    'plans_path' => env('REALSEED_PLANS_PATH'),
 
     /*
     |--------------------------------------------------------------------------
@@ -78,7 +78,7 @@ return [
     | Excluded Tables and Columns
     |--------------------------------------------------------------------------
     |
-    | Tables and columns AI Seeder never generates data for. Wildcards are
+    | Tables and columns RealSeed never generates data for. Wildcards are
     | supported. Columns use "table.column" or "*.column". Required columns
     | cannot be excluded because inserts would fail without them.
     |
@@ -158,7 +158,7 @@ return [
     | analyzers:         ApplicationAnalyzer classes applied to every plan
     | locales:           custom LocaleProvider classes by code, used as --locale=<code>
     |
-    | Contracts live in AISeeder\Extension and AISeeder\Locale.
+    | Contracts live in Ayangzy\RealSeed\Extension and Ayangzy\RealSeed\Locale.
     |
     */
 

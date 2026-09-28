@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Schema\Constraints;
+namespace Ayangzy\RealSeed\Schema\Constraints;
 
 use Illuminate\Database\Connection;
 

@@ -1,11 +1,11 @@
 <?php
 
-namespace AISeeder\Schema;
+namespace Ayangzy\RealSeed\Schema;
 
-use AISeeder\Schema\Constraints\ConstraintReader;
-use AISeeder\Schema\Constraints\PostgresConstraintReader;
-use AISeeder\Schema\Constraints\SqliteConstraintReader;
-use AISeeder\Schema\Constraints\SqlServerConstraintReader;
+use Ayangzy\RealSeed\Schema\Constraints\ConstraintReader;
+use Ayangzy\RealSeed\Schema\Constraints\PostgresConstraintReader;
+use Ayangzy\RealSeed\Schema\Constraints\SqliteConstraintReader;
+use Ayangzy\RealSeed\Schema\Constraints\SqlServerConstraintReader;
 use Illuminate\Database\Connection;
 use Throwable;
 

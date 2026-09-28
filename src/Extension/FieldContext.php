@@ -1,11 +1,11 @@
 <?php
 
-namespace AISeeder\Extension;
+namespace Ayangzy\RealSeed\Extension;
 
-use AISeeder\Generation\RowState;
-use AISeeder\Generation\SeededRandom;
-use AISeeder\Planning\FieldPlan;
-use AISeeder\Schema\ColumnSchema;
+use Ayangzy\RealSeed\Generation\RowState;
+use Ayangzy\RealSeed\Generation\SeededRandom;
+use Ayangzy\RealSeed\Planning\FieldPlan;
+use Ayangzy\RealSeed\Schema\ColumnSchema;
 use Carbon\CarbonImmutable;
 use Faker\Generator as Faker;
 

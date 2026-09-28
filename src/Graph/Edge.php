@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Graph;
+namespace Ayangzy\RealSeed\Graph;
 
 /**
  * A child table referencing a parent table (child.columns -> parent.parentColumns).

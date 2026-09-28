@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Semantics;
+namespace Ayangzy\RealSeed\Semantics;
 
 /**
  * The closed vocabulary of field meanings the deterministic generator understands.

@@ -1,12 +1,12 @@
 <?php
 
-namespace AISeeder\Extension;
+namespace Ayangzy\RealSeed\Extension;
 
 use Illuminate\Contracts\Container\Container;
 use InvalidArgumentException;
 
 /**
- * Resolves the extension classes registered in config/ai-seeder.php.
+ * Resolves the extension classes registered in config/realseed.php.
  */
 final class ExtensionRegistry
 {
@@ -41,7 +41,7 @@ final class ExtensionRegistry
             foreach ((array) ($this->config[$key] ?? []) as $name => $class) {
                 if (! is_string($class) || ! is_subclass_of($class, $contract)) {
                     throw new InvalidArgumentException(sprintf(
-                        '[%s] is registered in config/ai-seeder.php under "%s" but does not implement %s.',
+                        '[%s] is registered in config/realseed.php under "%s" but does not implement %s.',
                         is_string($class) ? $class : get_debug_type($class), is_int($name) ? $key : "{$key}.{$name}", $contract,
                     ));
                 }
@@ -100,7 +100,7 @@ final class ExtensionRegistry
     private function make(string $class, string $contract): object
     {
         if (! is_subclass_of($class, $contract)) {
-            throw new InvalidArgumentException("[{$class}] is registered in config/ai-seeder.php but does not implement {$contract}.");
+            throw new InvalidArgumentException("[{$class}] is registered in config/realseed.php but does not implement {$contract}.");
         }
 
         return $this->instances[$class] ??= $this->container->make($class);

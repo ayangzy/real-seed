@@ -1,7 +1,7 @@
 <?php
 
-use AISeeder\Tests\Fixtures\SaasSchema;
-use AISeeder\Tests\TestCase;
+use Ayangzy\RealSeed\Tests\Fixtures\SaasSchema;
+use Ayangzy\RealSeed\Tests\TestCase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
@@ -16,7 +16,7 @@ it('generates 100k rows within memory and time budgets', function () {
     $this->setEnvironment('local');
 
     $started = microtime(true);
-    $exit = Artisan::call('ai:seed', ['--seed' => 1, '--count' => 100000, '--size' => 'large', '--no-interaction' => true]);
+    $exit = Artisan::call('realseed', ['--seed' => 1, '--count' => 100000, '--size' => 'large', '--no-interaction' => true]);
     $seconds = microtime(true) - $started;
 
     $total = collect(['organizations', 'users', 'projects', 'project_user', 'tasks', 'comments', 'tags', 'taggables'])

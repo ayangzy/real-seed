@@ -1,14 +1,14 @@
 <?php
 
-namespace AISeeder\Generation;
+namespace Ayangzy\RealSeed\Generation;
 
-use AISeeder\Extension\ExtensionRegistry;
-use AISeeder\Extension\FieldContext;
-use AISeeder\Locale\FakerLocale;
-use AISeeder\Locale\LocaleProvider;
-use AISeeder\Planning\FieldPlan;
-use AISeeder\Schema\ColumnSchema;
-use AISeeder\Semantics\Semantic;
+use Ayangzy\RealSeed\Extension\ExtensionRegistry;
+use Ayangzy\RealSeed\Extension\FieldContext;
+use Ayangzy\RealSeed\Locale\FakerLocale;
+use Ayangzy\RealSeed\Locale\LocaleProvider;
+use Ayangzy\RealSeed\Planning\FieldPlan;
+use Ayangzy\RealSeed\Schema\ColumnSchema;
+use Ayangzy\RealSeed\Semantics\Semantic;
 use Carbon\CarbonImmutable;
 use Closure;
 use Faker\Generator as Faker;

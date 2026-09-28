@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Extension;
+namespace Ayangzy\RealSeed\Extension;
 
 /**
  * Chooses the parent a reference points to. Register under "reference_pickers" by

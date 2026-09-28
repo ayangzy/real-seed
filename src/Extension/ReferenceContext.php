@@ -1,8 +1,8 @@
 <?php
 
-namespace AISeeder\Extension;
+namespace Ayangzy\RealSeed\Extension;
 
-use AISeeder\Generation\SeededRandom;
+use Ayangzy\RealSeed\Generation\SeededRandom;
 
 final readonly class ReferenceContext
 {

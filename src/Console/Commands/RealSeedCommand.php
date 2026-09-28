@@ -1,36 +1,36 @@
 <?php
 
-namespace AISeeder\Console\Commands;
+namespace Ayangzy\RealSeed\Console\Commands;
 
-use AISeeder\AI\AIProviderException;
-use AISeeder\AI\AIProviderInterface;
-use AISeeder\AI\ApplicationContext;
-use AISeeder\AI\PlanPrompt;
-use AISeeder\AI\Providers\NullProvider;
-use AISeeder\Analysis\ProjectAnalysis;
-use AISeeder\Analysis\ProjectAnalyzer;
-use AISeeder\Database\SeederExecutor;
-use AISeeder\Environment\ConnectionSafetyCheck;
-use AISeeder\Extension\ExtensionRegistry;
-use AISeeder\Extension\ScenarioProvider;
-use AISeeder\Environment\EnvironmentGuard;
-use AISeeder\Environment\TargetDatabase;
-use AISeeder\Environment\UnsupportedEnvironmentException;
-use AISeeder\Generation\GenerationStats;
-use AISeeder\Generation\TableGenerator;
-use AISeeder\Graph\CircularDependencyException;
-use AISeeder\Graph\DependencyOrder;
-use AISeeder\Graph\DependencyResolver;
-use AISeeder\Locale\LocaleProvider;
-use AISeeder\Locale\LocaleRegistry;
-use AISeeder\Planning\ConfigOverrides;
-use AISeeder\Planning\GenerationPlan;
-use AISeeder\Planning\HeuristicPlanner;
-use AISeeder\Planning\PlanningException;
-use AISeeder\Planning\PlanOptions;
-use AISeeder\Planning\PlanStore;
-use AISeeder\Planning\PlanValidator;
-use AISeeder\Validation\GenerationException;
+use Ayangzy\RealSeed\AI\AIProviderException;
+use Ayangzy\RealSeed\AI\AIProviderInterface;
+use Ayangzy\RealSeed\AI\ApplicationContext;
+use Ayangzy\RealSeed\AI\PlanPrompt;
+use Ayangzy\RealSeed\AI\Providers\NullProvider;
+use Ayangzy\RealSeed\Analysis\ProjectAnalysis;
+use Ayangzy\RealSeed\Analysis\ProjectAnalyzer;
+use Ayangzy\RealSeed\Database\SeederExecutor;
+use Ayangzy\RealSeed\Environment\ConnectionSafetyCheck;
+use Ayangzy\RealSeed\Extension\ExtensionRegistry;
+use Ayangzy\RealSeed\Extension\ScenarioProvider;
+use Ayangzy\RealSeed\Environment\EnvironmentGuard;
+use Ayangzy\RealSeed\Environment\TargetDatabase;
+use Ayangzy\RealSeed\Environment\UnsupportedEnvironmentException;
+use Ayangzy\RealSeed\Generation\GenerationStats;
+use Ayangzy\RealSeed\Generation\TableGenerator;
+use Ayangzy\RealSeed\Graph\CircularDependencyException;
+use Ayangzy\RealSeed\Graph\DependencyOrder;
+use Ayangzy\RealSeed\Graph\DependencyResolver;
+use Ayangzy\RealSeed\Locale\LocaleProvider;
+use Ayangzy\RealSeed\Locale\LocaleRegistry;
+use Ayangzy\RealSeed\Planning\ConfigOverrides;
+use Ayangzy\RealSeed\Planning\GenerationPlan;
+use Ayangzy\RealSeed\Planning\HeuristicPlanner;
+use Ayangzy\RealSeed\Planning\PlanningException;
+use Ayangzy\RealSeed\Planning\PlanOptions;
+use Ayangzy\RealSeed\Planning\PlanStore;
+use Ayangzy\RealSeed\Planning\PlanValidator;
+use Ayangzy\RealSeed\Validation\GenerationException;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Illuminate\Database\Connection;
@@ -41,9 +41,9 @@ use PDOException;
 use RuntimeException;
 use Throwable;
 
-class AiSeedCommand extends Command
+class RealSeedCommand extends Command
 {
-    protected $signature = 'ai:seed
+    protected $signature = 'realseed
         {--dry-run : Show the generation plan without changing the database}
         {--seed= : Seed for reproducible output}
         {--size= : Dataset size: small, medium, or large}
@@ -56,9 +56,12 @@ class AiSeedCommand extends Command
         {--replan : Ask the AI for a new plan instead of reusing the cached one}
         {--show-prompt : Print exactly what would be sent to the AI}
         {--locale= : Locale for names, addresses, phones and currency, e.g. ng, us, gb, de, or a Faker locale like pt_BR}
-        {--strategy= : ai (default), factory (use model factories for values), or hybrid (factories for basic values, AI Seeder for relationships, distributions and timelines)}';
+        {--strategy= : ai (default), factory (use model factories for values), or hybrid (factories for basic values, RealSeed for relationships, distributions and timelines)}';
 
     protected $description = 'Generate realistic synthetic data for local, dev, development, or staging environments';
+
+    /** @var list<string> */
+    protected $aliases = ['ai:seed'];
 
     /** @var list<string> */
     private array $planNotes = [];
@@ -66,7 +69,7 @@ class AiSeedCommand extends Command
     public function handle(EnvironmentGuard $guard, ConnectionSafetyCheck $safety, ProjectAnalyzer $analyzer, AIProviderInterface $ai, PlanStore $plans, LocaleRegistry $locales, ExtensionRegistry $extensions): int
     {
         $this->newLine();
-        $this->line($this->option('dry-run') ? '<options=bold>AI Seeder — Dry Run</>' : '<options=bold>AI Seeder</>');
+        $this->line($this->option('dry-run') ? '<options=bold>RealSeed — Dry Run</>' : '<options=bold>RealSeed</>');
         $this->newLine();
 
         // The guard runs before any analysis, database access, or AI call.
@@ -76,7 +79,7 @@ class AiSeedCommand extends Command
             return $this->rejectEnvironment($e->environment);
         }
 
-        $target = TargetDatabase::fromConfig($this->laravel['config'], $this->laravel['config']->get('ai-seeder.connection'));
+        $target = TargetDatabase::fromConfig($this->laravel['config'], $this->laravel['config']->get('realseed.connection'));
 
         $this->line("Environment: {$environment}");
         $this->line("Database: {$target->database}");
@@ -92,7 +95,7 @@ class AiSeedCommand extends Command
 
         if ($assessment['status'] === ConnectionSafetyCheck::BLOCKED) {
             $this->line("<fg=red>✗ {$assessment['reason']}</>");
-            $this->line('AI Seeder refuses to write to databases that look like production.');
+            $this->line('RealSeed refuses to write to databases that look like production.');
 
             return $this->noChangesMade();
         }
@@ -190,13 +193,13 @@ class AiSeedCommand extends Command
             throw new InvalidArgumentException('--seed must be a whole number.');
         }
 
-        $strategy = (string) ($this->option('strategy') ?? $this->laravel['config']->get('ai-seeder.strategy', TableGenerator::STRATEGY_AI));
+        $strategy = (string) ($this->option('strategy') ?? $this->laravel['config']->get('realseed.strategy', TableGenerator::STRATEGY_AI));
 
         if (! in_array($strategy, [TableGenerator::STRATEGY_AI, TableGenerator::STRATEGY_FACTORY, TableGenerator::STRATEGY_HYBRID], true)) {
             throw new InvalidArgumentException('--strategy must be ai, factory, or hybrid.');
         }
 
-        $size = (string) ($this->option('size') ?? $this->laravel['config']->get('ai-seeder.size', 'medium'));
+        $size = (string) ($this->option('size') ?? $this->laravel['config']->get('realseed.size', 'medium'));
 
         if (! in_array($size, ['small', 'medium', 'large'], true)) {
             throw new InvalidArgumentException('--size must be small, medium, or large.');
@@ -211,7 +214,7 @@ class AiSeedCommand extends Command
             'fresh' => (bool) $this->option('fresh'),
             'scenario' => trim((string) $this->option('scenario')) ?: null,
             'strategy' => $strategy,
-            'locale' => (string) ($this->option('locale') ?? $this->laravel['config']->get('ai-seeder.locale', 'en_US')),
+            'locale' => (string) ($this->option('locale') ?? $this->laravel['config']->get('realseed.locale', 'en_US')),
         ];
     }
 
@@ -236,10 +239,10 @@ class AiSeedCommand extends Command
 
         try {
             $analysis = $analyzer->analyze($this->laravel['db']->connection($target->connection), $migrator, [
-                'model_paths' => $config->get('ai-seeder.model_paths', []),
+                'model_paths' => $config->get('realseed.model_paths', []),
                 'migration_paths' => [$this->laravel->databasePath('migrations'), ...$migrator->paths()],
-                'excluded_tables' => $config->get('ai-seeder.excluded_tables', []),
-                'excluded_columns' => $config->get('ai-seeder.excluded_columns', []),
+                'excluded_tables' => $config->get('realseed.excluded_tables', []),
+                'excluded_columns' => $config->get('realseed.excluded_columns', []),
             ]);
         } catch (QueryException|PDOException $e) {
             $this->line('<fg=red>✗ Could not read the database schema.</>');
@@ -250,7 +253,7 @@ class AiSeedCommand extends Command
 
         if (! $analysis->migrations->isUpToDate()) {
             $this->line(sprintf(
-                '<fg=red>✗ %d of %d migrations have not been run.</> AI Seeder reads the migrated schema; run <options=bold>php artisan migrate</> first.',
+                '<fg=red>✗ %d of %d migrations have not been run.</> RealSeed reads the migrated schema; run <options=bold>php artisan migrate</> first.',
                 count($analysis->migrations->pending),
                 $analysis->migrations->total,
             ));
@@ -292,11 +295,11 @@ class AiSeedCommand extends Command
      */
     private function aiStatus(AIProviderInterface $ai, ?string $scenario): ?bool
     {
-        $enabled = (bool) $this->laravel['config']->get('ai-seeder.ai.enabled', true);
+        $enabled = (bool) $this->laravel['config']->get('realseed.ai.enabled', true);
 
         $reason = match (true) {
             (bool) $this->option('no-ai') => 'off (--no-ai)',
-            ! $enabled => 'off (disabled in config/ai-seeder.php)',
+            ! $enabled => 'off (disabled in config/realseed.php)',
             ! $ai->available() => 'unavailable ('.($ai instanceof NullProvider ? $ai->reason() : 'install laravel/ai to enable it').')',
             default => null,
         };
@@ -363,7 +366,7 @@ class AiSeedCommand extends Command
 
         $base = $planner->plan($planOptions);
         $this->planNotes = $planner->notes();
-        $validator = new PlanValidator($analysis, (int) $config->get('ai-seeder.max_rows', 250000));
+        $validator = new PlanValidator($analysis, (int) $config->get('realseed.max_rows', 250000));
 
         // Developer knowledge refines the baseline before the AI sees it...
         foreach ($extensions->analyzers() as $applicationAnalyzer) {
@@ -379,7 +382,7 @@ class AiSeedCommand extends Command
             $this->line('Scenario: '.OutputFormatter::escape($options['scenario']));
         }
 
-        $overrides = (array) $config->get('ai-seeder.overrides', []);
+        $overrides = (array) $config->get('realseed.overrides', []);
 
         if ($overrides !== []) {
             $plan = $this->mergeTrusted($validator, $plan, ConfigOverrides::toSuggestions($overrides), $planOptions);
@@ -514,7 +517,7 @@ class AiSeedCommand extends Command
         $tables = array_values(array_filter($plan->generatedTables(), fn (string $table) => $analysis->factory($table) !== null));
 
         return $tables === []
-            ? ' (no factories found for the generated tables; AI Seeder generates all values)'
+            ? ' (no factories found for the generated tables; RealSeed generates all values)'
             : ' (factories for '.implode(', ', $tables).')';
     }
 
@@ -610,8 +613,8 @@ class AiSeedCommand extends Command
             locale: $locale,
             extensions: $extensions,
             encrypter: $this->encrypter(),
-            maxChunk: (int) $config->get('ai-seeder.chunk_size', 500),
-            existingRowsLimit: (int) $config->get('ai-seeder.existing_rows_limit', 100000),
+            maxChunk: (int) $config->get('realseed.chunk_size', 500),
+            existingRowsLimit: (int) $config->get('realseed.existing_rows_limit', 100000),
             strategy: $strategy,
             appLocale: (string) $config->get('app.locale', 'en'),
         );
@@ -647,7 +650,7 @@ class AiSeedCommand extends Command
 
     private function showSummary(GenerationStats $stats, DependencyOrder $order, string $environment, GenerationPlan $plan): void
     {
-        $this->line('<options=bold>AI Seeder Complete</>');
+        $this->line('<options=bold>RealSeed Complete</>');
         $this->newLine();
         $this->line("Environment: {$environment}");
         $this->newLine();
@@ -682,7 +685,7 @@ class AiSeedCommand extends Command
 
         $this->newLine();
         $this->line(sprintf('Generation time: %.2fs', $stats->seconds));
-        $this->line("Reproduce with: php artisan ai:seed --seed={$plan->seed}", verbosity: 'v');
+        $this->line("Reproduce with: php artisan realseed --seed={$plan->seed}", verbosity: 'v');
     }
 
     private function encrypter(): mixed
@@ -698,9 +701,9 @@ class AiSeedCommand extends Command
     {
         $this->line('Environment: '.($environment ?? 'unknown'));
         $this->newLine();
-        $this->line('<fg=red>✗ AI Seeder cannot run in this environment.</>');
+        $this->line('<fg=red>✗ RealSeed cannot run in this environment.</>');
         $this->newLine();
-        $this->line('AI Seeder only supports:');
+        $this->line('RealSeed only supports:');
 
         foreach (EnvironmentGuard::ALLOWED_ENVIRONMENTS as $allowed) {
             $this->line("- {$allowed}");
@@ -714,7 +717,7 @@ class AiSeedCommand extends Command
         $this->line("<fg=yellow>! {$reason}</>");
 
         if (! $this->input->isInteractive()) {
-            $this->line('Confirmation is required, so AI Seeder cannot continue in non-interactive mode.');
+            $this->line('Confirmation is required, so RealSeed cannot continue in non-interactive mode.');
 
             return false;
         }

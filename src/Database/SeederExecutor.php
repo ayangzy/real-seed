@@ -1,27 +1,27 @@
 <?php
 
-namespace AISeeder\Database;
+namespace Ayangzy\RealSeed\Database;
 
-use AISeeder\Analysis\ProjectAnalysis;
-use AISeeder\Extension\ExtensionRegistry;
-use AISeeder\Generation\FactorySource;
-use AISeeder\Generation\GenerationStats;
-use AISeeder\Generation\KeyAllocator;
-use AISeeder\Generation\RelationshipResolver;
-use AISeeder\Generation\RowStore;
-use AISeeder\Generation\SeededRandom;
-use AISeeder\Generation\TableGenerator;
-use AISeeder\Generation\TemporalGenerator;
-use AISeeder\Generation\UniqueTracker;
-use AISeeder\Generation\ValueGenerator;
-use AISeeder\Graph\DependencyOrder;
-use AISeeder\Locale\FakerLocale;
-use AISeeder\Locale\LocaleProvider;
-use AISeeder\Graph\Edge;
-use AISeeder\Planning\GenerationPlan;
-use AISeeder\Schema\TableSchema;
-use AISeeder\Validation\GenerationException;
-use AISeeder\Validation\GenerationValidator;
+use Ayangzy\RealSeed\Analysis\ProjectAnalysis;
+use Ayangzy\RealSeed\Extension\ExtensionRegistry;
+use Ayangzy\RealSeed\Generation\FactorySource;
+use Ayangzy\RealSeed\Generation\GenerationStats;
+use Ayangzy\RealSeed\Generation\KeyAllocator;
+use Ayangzy\RealSeed\Generation\RelationshipResolver;
+use Ayangzy\RealSeed\Generation\RowStore;
+use Ayangzy\RealSeed\Generation\SeededRandom;
+use Ayangzy\RealSeed\Generation\TableGenerator;
+use Ayangzy\RealSeed\Generation\TemporalGenerator;
+use Ayangzy\RealSeed\Generation\UniqueTracker;
+use Ayangzy\RealSeed\Generation\ValueGenerator;
+use Ayangzy\RealSeed\Graph\DependencyOrder;
+use Ayangzy\RealSeed\Locale\FakerLocale;
+use Ayangzy\RealSeed\Locale\LocaleProvider;
+use Ayangzy\RealSeed\Graph\Edge;
+use Ayangzy\RealSeed\Planning\GenerationPlan;
+use Ayangzy\RealSeed\Schema\TableSchema;
+use Ayangzy\RealSeed\Validation\GenerationException;
+use Ayangzy\RealSeed\Validation\GenerationValidator;
 use Carbon\CarbonImmutable;
 use Closure;
 use Faker\Factory as FakerFactory;

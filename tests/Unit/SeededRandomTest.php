@@ -1,6 +1,6 @@
 <?php
 
-use AISeeder\Generation\SeededRandom;
+use Ayangzy\RealSeed\Generation\SeededRandom;
 
 it('produces the same sequence for the same seed', function () {
     $a = new SeededRandom(7);

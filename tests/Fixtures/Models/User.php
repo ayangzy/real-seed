@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Tests\Fixtures\Models;
+namespace Ayangzy\RealSeed\Tests\Fixtures\Models;
 
-use AISeeder\Tests\Fixtures\Enums\UserStatus;
-use AISeeder\Tests\Fixtures\Factories\UserFactory;
+use Ayangzy\RealSeed\Tests\Fixtures\Enums\UserStatus;
+use Ayangzy\RealSeed\Tests\Fixtures\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;

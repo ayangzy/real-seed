@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\Planning;
+namespace Ayangzy\RealSeed\Planning;
 
 /**
  * How one column is generated.

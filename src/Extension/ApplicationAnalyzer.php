@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Extension;
+namespace Ayangzy\RealSeed\Extension;
 
-use AISeeder\Analysis\ProjectAnalysis;
-use AISeeder\Planning\GenerationPlan;
+use Ayangzy\RealSeed\Analysis\ProjectAnalysis;
+use Ayangzy\RealSeed\Planning\GenerationPlan;
 
 /**
  * Adds application-specific understanding to every run, before AI planning: for
@@ -13,7 +13,7 @@ use AISeeder\Planning\GenerationPlan;
 interface ApplicationAnalyzer
 {
     /**
-     * @return array Suggestions in the AI output format (see AISeeder\AI\PlanPrompt::schema()).
+     * @return array Suggestions in the AI output format (see Ayangzy\RealSeed\AI\PlanPrompt::schema()).
      */
     public function suggestions(ProjectAnalysis $analysis, GenerationPlan $plan): array;
 }

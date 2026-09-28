@@ -1,12 +1,12 @@
 <?php
 
-namespace AISeeder\Planning;
+namespace Ayangzy\RealSeed\Planning;
 
-use AISeeder\Analysis\ProjectAnalysis;
-use AISeeder\Graph\DependencyOrder;
-use AISeeder\Graph\DependencyResolver;
-use AISeeder\Graph\Edge;
-use AISeeder\Semantics\FieldInferrer;
+use Ayangzy\RealSeed\Analysis\ProjectAnalysis;
+use Ayangzy\RealSeed\Graph\DependencyOrder;
+use Ayangzy\RealSeed\Graph\DependencyResolver;
+use Ayangzy\RealSeed\Graph\Edge;
+use Ayangzy\RealSeed\Semantics\FieldInferrer;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 

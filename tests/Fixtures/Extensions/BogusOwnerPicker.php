@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Tests\Fixtures\Extensions;
+namespace Ayangzy\RealSeed\Tests\Fixtures\Extensions;
 
-use AISeeder\Extension\ReferenceContext;
-use AISeeder\Extension\ReferencePicker;
+use Ayangzy\RealSeed\Extension\ReferenceContext;
+use Ayangzy\RealSeed\Extension\ReferencePicker;
 
 class BogusOwnerPicker implements ReferencePicker
 {

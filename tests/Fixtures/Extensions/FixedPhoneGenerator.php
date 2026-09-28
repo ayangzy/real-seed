@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Tests\Fixtures\Extensions;
+namespace Ayangzy\RealSeed\Tests\Fixtures\Extensions;
 
-use AISeeder\Extension\FieldContext;
-use AISeeder\Extension\FieldGenerator;
+use Ayangzy\RealSeed\Extension\FieldContext;
+use Ayangzy\RealSeed\Extension\FieldGenerator;
 
 class FixedPhoneGenerator implements FieldGenerator
 {

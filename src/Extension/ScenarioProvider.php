@@ -1,14 +1,14 @@
 <?php
 
-namespace AISeeder\Extension;
+namespace Ayangzy\RealSeed\Extension;
 
-use AISeeder\Analysis\ProjectAnalysis;
-use AISeeder\Planning\GenerationPlan;
+use Ayangzy\RealSeed\Analysis\ProjectAnalysis;
+use Ayangzy\RealSeed\Planning\GenerationPlan;
 
 /**
  * A named, reusable scenario, used with --scenario=<name>. Register under "scenarios".
  *
- * Suggestions use the same format as AI output (see AISeeder\AI\PlanPrompt::schema())
+ * Suggestions use the same format as AI output (see Ayangzy\RealSeed\AI\PlanPrompt::schema())
  * and are validated the same way. When AI planning is available, description() is
  * also given to the AI as the scenario.
  */

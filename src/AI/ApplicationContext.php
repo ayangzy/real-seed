@@ -1,10 +1,10 @@
 <?php
 
-namespace AISeeder\AI;
+namespace Ayangzy\RealSeed\AI;
 
-use AISeeder\Analysis\ProjectAnalysis;
-use AISeeder\Planning\GenerationPlan;
-use AISeeder\Semantics\Semantic;
+use Ayangzy\RealSeed\Analysis\ProjectAnalysis;
+use Ayangzy\RealSeed\Planning\GenerationPlan;
+use Ayangzy\RealSeed\Semantics\Semantic;
 
 /**
  * The compact description of the application sent to the AI.

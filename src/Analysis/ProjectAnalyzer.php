@@ -1,9 +1,9 @@
 <?php
 
-namespace AISeeder\Analysis;
+namespace Ayangzy\RealSeed\Analysis;
 
-use AISeeder\Graph\SchemaGraph;
-use AISeeder\Schema\SchemaReader;
+use Ayangzy\RealSeed\Graph\SchemaGraph;
+use Ayangzy\RealSeed\Schema\SchemaReader;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Migrations\Migrator;
 

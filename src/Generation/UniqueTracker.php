@@ -1,8 +1,8 @@
 <?php
 
-namespace AISeeder\Generation;
+namespace Ayangzy\RealSeed\Generation;
 
-use AISeeder\Schema\TableSchema;
+use Ayangzy\RealSeed\Schema\TableSchema;
 use DateTimeInterface;
 
 /**

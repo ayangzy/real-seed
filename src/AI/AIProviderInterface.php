@@ -1,6 +1,6 @@
 <?php
 
-namespace AISeeder\AI;
+namespace Ayangzy\RealSeed\AI;
 
 /**
  * A language model that returns structured output.
