@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.5
+
+- Fix: any `{name}_type` + `{name}_id` pair was assumed to be polymorphic. A `bank_accounts` table with an `account_type` enum (checking, savings, …) was skipped, and with `morph_targets` set its enum column received a model class name. Pairs now need evidence: a declared morph relation, or no contradiction (fixed non-model values in the `_type` column, or a foreign key/`belongsTo` on the `_id` column).
+- Unconstrained `_id` columns are linked by Laravel's naming convention (`account_id` → `accounts.id`) when the table exists.
+- `morph_targets` entries for non-polymorphic pairs are ignored with a visible note.
+
 ## v0.1.4
 
 - Fix: skipped tables were only propagated one level, so deeper dependents (e.g. `reconciliation_items` needing `bank_transactions` needing `bank_accounts`) still failed mid-run. Skips now propagate to any depth, and the final plan is re-checked before the confirmation prompt.

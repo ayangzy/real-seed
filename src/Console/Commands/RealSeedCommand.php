@@ -289,6 +289,10 @@ class RealSeedCommand extends Command
             $this->newLine();
         }
 
+        foreach ($analysis->notices as $notice) {
+            $this->line('<fg=yellow>! '.OutputFormatter::escape($notice).'</>');
+        }
+
         foreach ($analysis->warnings as $warning) {
             $this->line("<fg=yellow>! {$warning}</>", verbosity: 'v');
         }

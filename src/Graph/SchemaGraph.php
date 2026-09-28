@@ -50,12 +50,20 @@ final class SchemaGraph
         }
 
         $morphSlots = self::detectMorphSlots($schema);
+        $declaredMorphs = [];
 
         foreach ($models as $table => $model) {
             foreach ($model->relations as $relation) {
                 self::addRelationEdges($schema, $model, $relation, $edges, $morphSlots, $explicitPivots);
+
+                if ($relation->type === RelationInfo::MORPH_TO) {
+                    $declaredMorphs[$model->table.'.'.self::unqualify($relation->morphType)] = true;
+                }
             }
         }
+
+        $morphSlots = self::confirmedMorphSlots($schema, $models, $morphSlots, $edges, $declaredMorphs);
+        $edges = self::addConventionEdges($schema, $edges, $morphSlots);
 
         ksort($edges);
         ksort($morphSlots);
@@ -241,6 +249,91 @@ final class SchemaGraph
                 return;
             }
         }
+    }
+
+    /**
+     * Keeps only the {name}_type / {name}_id pairs that really are polymorphic. The names
+     * alone prove nothing: bank_accounts.account_type may be an enum of account kinds
+     * (checking, savings) and account_id a plain reference. A pair counts when a model
+     * declares it, or when nothing contradicts it: the id column isn't a foreign key or
+     * belongsTo, and the type column has no fixed list of non-model values.
+     *
+     * @param  array<string, MorphSlot>  $slots
+     * @param  array<string, Edge>  $edges
+     * @param  array<string, true>  $declaredMorphs  "table.type_column" pairs with a morphTo relation
+     * @return array<string, MorphSlot>
+     */
+    private static function confirmedMorphSlots(DatabaseSchema $schema, array $models, array $slots, array $edges, array $declaredMorphs): array
+    {
+        foreach ($slots as $key => $slot) {
+            if ($slot->targets !== [] || isset($declaredMorphs["{$slot->table}.{$slot->typeColumn}"])) {
+                continue;
+            }
+
+            $idIsReference = isset($edges[$slot->table.'.'.$slot->idColumn]);
+            $cast = $models[$slot->table]->casts[$slot->typeColumn] ?? null;
+            $fixedValues = is_string($cast) && enum_exists($cast)
+                ? array_map(fn ($case) => $case instanceof \BackedEnum ? $case->value : $case->name, $cast::cases())
+                : $schema->table($slot->table)->column($slot->typeColumn)?->allowedValues;
+
+            $nonModelValues = $fixedValues !== null && array_filter(
+                $fixedValues,
+                fn ($value) => ! self::isModelType((string) $value),
+            ) !== [];
+
+            if ($idIsReference || $nonModelValues) {
+                unset($slots[$key]);
+            }
+        }
+
+        return $slots;
+    }
+
+    private static function isModelType(string $value): bool
+    {
+        $class = \Illuminate\Database\Eloquent\Relations\Relation::getMorphedModel($value) ?? $value;
+
+        return class_exists($class) && is_subclass_of($class, \Illuminate\Database\Eloquent\Model::class);
+    }
+
+    /**
+     * Laravel naming convention for references without a database constraint or model
+     * relation: an unconstrained account_id points at accounts.id when that table exists.
+     *
+     * @param  array<string, Edge>  $edges
+     * @param  array<string, MorphSlot>  $morphSlots
+     * @return array<string, Edge>
+     */
+    private static function addConventionEdges(DatabaseSchema $schema, array $edges, array $morphSlots): array
+    {
+        $morphColumns = [];
+
+        foreach ($morphSlots as $slot) {
+            $morphColumns["{$slot->table}.{$slot->idColumn}"] = true;
+        }
+
+        foreach ($schema->tables as $table) {
+            foreach ($table->columns as $column) {
+                $key = "{$table->name}.{$column->name}";
+
+                if (! str_ends_with($column->name, '_id') || isset($edges[$key]) || isset($morphColumns[$key])
+                    || in_array($column->name, $table->primaryKey, true)) {
+                    continue;
+                }
+
+                $parent = $schema->table(\Illuminate\Support\Str::plural(substr($column->name, 0, -3)));
+                $parentKey = $parent?->singlePrimaryKey();
+
+                if ($parentKey === null || $parentKey->family() !== $column->family()
+                    || ! in_array($column->family(), ['integer', 'uuid', 'string'], true)) {
+                    continue;
+                }
+
+                $edges[$key] = new Edge($table->name, [$column->name], $parent->name, [$parentKey->name], $column->nullable, Edge::SOURCE_CONVENTION);
+            }
+        }
+
+        return $edges;
     }
 
     /**

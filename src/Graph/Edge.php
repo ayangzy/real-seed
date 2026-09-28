@@ -11,6 +11,9 @@ final readonly class Edge
 
     public const SOURCE_RELATION = 'relation';
 
+    /** Inferred from Laravel's naming convention (account_id -> accounts.id). */
+    public const SOURCE_CONVENTION = 'convention';
+
     /**
      * @param  list<string>  $columns
      * @param  list<string>  $parentColumns

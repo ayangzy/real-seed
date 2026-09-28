@@ -15,6 +15,9 @@ use Throwable;
  */
 final class ProjectAnalyzer
 {
+    /** @var list<string> */
+    private array $notices = [];
+
     public function __construct(
         private readonly SchemaReader $schemaReader,
         private readonly ModelFinder $modelFinder,
@@ -50,14 +53,18 @@ final class ProjectAnalyzer
 
         ksort($models);
 
+        $this->notices = [];
+        $graph = $this->withMorphTargets(SchemaGraph::build($schema, $models), $connection, (array) ($options['morph_targets'] ?? []));
+
         return new ProjectAnalysis(
             schema: $schema,
             models: $models,
             enums: $this->enumAnalyzer->analyze($schema, $models),
-            graph: $this->withMorphTargets(SchemaGraph::build($schema, $models), $connection, (array) ($options['morph_targets'] ?? [])),
+            graph: $graph,
             migrations: $migrations,
             warnings: [...$this->schemaReader->warnings(), ...$this->modelAnalyzer->warnings()],
             factories: $this->factoryAnalyzer->analyze($models),
+            notices: $this->notices,
         );
     }
 
@@ -70,6 +77,18 @@ final class ProjectAnalyzer
     private function withMorphTargets(SchemaGraph $graph, Connection $connection, array $configured): SchemaGraph
     {
         $targets = [];
+        $slots = [];
+
+        foreach ($graph->morphSlots() as $slot) {
+            $slots["{$slot->table}.{$slot->name}"] = true;
+        }
+
+        foreach (array_keys($configured) as $key) {
+            if (! isset($slots[$key])) {
+                $this->notices[] = "Ignored morph_targets for [{$key}]: it isn't a polymorphic relation "
+                    .'(its _type column has fixed values, or its _id column is a regular reference). Remove it from config/realseed.php.';
+            }
+        }
 
         foreach ($graph->morphSlots() as $slot) {
             $key = "{$slot->table}.{$slot->name}";

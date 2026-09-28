@@ -12,6 +12,7 @@ final readonly class ProjectAnalysis
      * @param  array<string, EnumInfo>  $enums  Keyed by "table.column".
      * @param  list<string>  $warnings
      * @param  array<string, FactoryInfo>  $factories  Keyed by table name.
+     * @param  list<string>  $notices  Things the developer must see, e.g. configuration that was ignored.
      */
     public function __construct(
         public DatabaseSchema $schema,
@@ -21,6 +22,7 @@ final readonly class ProjectAnalysis
         public MigrationStatus $migrations,
         public array $warnings = [],
         public array $factories = [],
+        public array $notices = [],
     ) {
     }
 

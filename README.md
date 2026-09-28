@@ -597,6 +597,8 @@ The schema is read through Laravel's schema builder, so RealSeed works with ever
 ## Limitations
 
 - **Composite foreign keys** aren't generated. Nullable ones are left null, and tables that require one are skipped with a note.
+- **Polymorphic detection:** a `{name}_type` + `{name}_id` pair counts as polymorphic only when a model declares it (`morphTo`, `morphMany`, …) or nothing contradicts it. A `_type` column with fixed values like `checking`/`savings`, or an `_id` column that is a foreign key, is treated as ordinary data.
+- **Links by convention:** an `_id` column without a foreign key or relation (`account_id`) is linked to the matching table (`accounts.id`) when one exists.
 - **Polymorphic relations** need to know their target types. RealSeed finds them from `morphMany`/`morphOne`/`morphToMany` relations on your models, from types already stored in the table, or from `morph_targets` in the config. Without any of these, the table (and tables that require it) is skipped with a note before anything is written.
 - **A cycle made only of required foreign keys** can't be inserted by anyone. RealSeed names the tables and stops.
 - **Observers and model events** don't fire (see [Performance](#performance)).
