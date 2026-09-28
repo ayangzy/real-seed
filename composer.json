@@ -1,5 +1,5 @@
 {
-    "name": "ayangzy/laravel-realseed",
+    "name": "ayangzy/real-seed",
     "description": "Generate realistic, relational, temporally coherent synthetic data for non-production Laravel environments.",
     "keywords": [
         "laravel",

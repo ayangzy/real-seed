@@ -81,8 +81,8 @@ AI is used for what it is good at: understanding what your application is, choos
 ## Installation
 
 ```bash
-composer require --dev ayangzy/laravel-realseed   # local development only
-composer require ayangzy/laravel-realseed         # also on staging (deploys often skip dev packages)
+composer require --dev ayangzy/real-seed   # local development only
+composer require ayangzy/real-seed         # also on staging (deploys often skip dev packages)
 ```
 
 Installing it outside `require-dev` is safe: the environment guard, not the install location, keeps it out of production.
