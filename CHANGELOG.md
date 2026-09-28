@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3.0
+## v0.2.4
 
 - RealSeed always plans with AI. `--no-ai` and the `ai.enabled` setting are removed. When no AI provider can be used, or the AI request fails, RealSeed stops before writing anything and explains why.
 - `laravel/ai` is now a required dependency (installed with RealSeed); only a provider key is needed in `.env`.

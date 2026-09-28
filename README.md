@@ -669,9 +669,9 @@ Pushing to `main` doesn't publish anything by itself. To release, put `[release]
 
 | Commit message contains | Version |
 |---|---|
-| `[release]` | patch: v0.3.0 → v0.3.1 |
-| `[release] [minor]` | minor: v0.3.1 → v0.4.0 |
-| `[release] [major]` | major: v0.4.0 → v1.0.0 |
+| `[release]` | patch: v0.2.4 → v0.2.5 |
+| `[release] [minor]` | minor: v0.2.5 → v0.3.0 |
+| `[release] [major]` | major: v0.3.0 → v1.0.0 |
 
 ## License
 
