@@ -2,6 +2,8 @@
 
 namespace AISeeder\Tests\Fixtures\Models;
 
+use AISeeder\Tests\Fixtures\Factories\ProjectFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -11,6 +13,12 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class Project extends Model
 {
+    use HasFactory;
+
+    protected static function newFactory(): ProjectFactory
+    {
+        return ProjectFactory::new();
+    }
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);

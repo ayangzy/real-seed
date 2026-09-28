@@ -9,7 +9,9 @@ uses(TestCase::class)->in('Unit', 'Feature');
 
 function analyzeSaasFixture(): ProjectAnalysis
 {
-    SaasSchema::create();
+    if (! \Illuminate\Support\Facades\Schema::hasTable('users')) {
+        SaasSchema::create();
+    }
 
     return app(ProjectAnalyzer::class)->analyze(app('db')->connection(), app('migrator'), [
         'model_paths' => [__DIR__.'/Fixtures/Models'],

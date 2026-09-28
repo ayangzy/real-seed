@@ -11,6 +11,7 @@ final readonly class ProjectAnalysis
      * @param  array<string, ModelInfo>  $models  Keyed by table name.
      * @param  array<string, EnumInfo>  $enums  Keyed by "table.column".
      * @param  list<string>  $warnings
+     * @param  array<string, FactoryInfo>  $factories  Keyed by table name.
      */
     public function __construct(
         public DatabaseSchema $schema,
@@ -19,7 +20,13 @@ final readonly class ProjectAnalysis
         public SchemaGraph $graph,
         public MigrationStatus $migrations,
         public array $warnings = [],
+        public array $factories = [],
     ) {
+    }
+
+    public function factory(string $table): ?FactoryInfo
+    {
+        return $this->factories[$table] ?? null;
     }
 
     public function model(string $table): ?ModelInfo

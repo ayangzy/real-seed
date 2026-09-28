@@ -2,7 +2,7 @@
 
 namespace AISeeder\Generation;
 
-use Carbon\CarbonInterface;
+use DateTimeInterface;
 
 /**
  * The row being built, so later columns can derive from earlier ones.
@@ -30,7 +30,7 @@ final class RowState
         $this->values[$column] = $value;
         $this->semantics[$semantic] ??= $column;
 
-        if ($value instanceof CarbonInterface) {
+        if ($value instanceof DateTimeInterface) {
             $this->timestamps[$column] = $value->getTimestamp();
         }
     }

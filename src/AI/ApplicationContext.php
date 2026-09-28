@@ -36,6 +36,10 @@ final class ApplicationContext
             $header .= $plan->count > 0 ? " — baseline rows: {$plan->count}" : ' — not generated in this run';
             $lines[] = $header;
 
+            if (($factory = $this->analysis->factory($table)) !== null) {
+                $lines[] = '- factory: '.class_basename($factory->factory).($factory->states === [] ? '' : ' (states: '.implode(', ', $factory->states).')');
+            }
+
             foreach ($schema->columns as $column) {
                 $field = $plan->field($column->name);
                 $parts = ["- {$column->name}: {$column->type}"];

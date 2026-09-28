@@ -3,6 +3,7 @@
 namespace AISeeder\Database;
 
 use AISeeder\Analysis\ProjectAnalysis;
+use AISeeder\Generation\FactorySource;
 use AISeeder\Generation\GenerationStats;
 use AISeeder\Generation\KeyAllocator;
 use AISeeder\Generation\RelationshipResolver;
@@ -49,6 +50,7 @@ final class SeederExecutor
         private readonly int $maxChunk = 500,
         private readonly int $existingRowsLimit = 100000,
         private readonly array $localeDefaults = ['country' => 'US', 'currency' => 'USD', 'app_locale' => 'en'],
+        private readonly string $strategy = TableGenerator::STRATEGY_AI,
     ) {
     }
 
@@ -133,8 +135,9 @@ final class SeederExecutor
 
             $chunkSize = $this->chunkSize(count($schema->columns));
             $done = 0;
+            $factory = $this->factorySource($table);
 
-            foreach ($generator->generate($schema, $tablePlan, $random, $chunkSize, $stats) as $chunk) {
+            foreach ($generator->generate($schema, $tablePlan, $random, $chunkSize, $stats, $factory, $this->strategy) as $chunk) {
                 $rows = array_map(fn (array $row) => $serializer->serialize($schema, $model, $row), $chunk);
 
                 foreach ($rows as $row) {
@@ -149,12 +152,31 @@ final class SeederExecutor
                 gc_collect_cycles();
             }
 
+            if ($factory?->unsafeReason() !== null) {
+                $stats->notes[] = "{$factory->info->factory} was not used for [{$table}]: {$factory->unsafeReason()}";
+            } elseif ($factory !== null) {
+                $stats->factoriesUsed[$table] = $factory->info->factory;
+            }
+
             if ($schema->singlePrimaryKey()?->autoIncrement && $this->db->getDriverName() === 'pgsql') {
                 $this->resetSequence($schema);
             }
         }
 
         $this->backfill($plan, $order, $relations, SeededRandom::derive($plan->seed, 'backfill'), $stats);
+    }
+
+    private function factorySource(string $table): ?FactorySource
+    {
+        $info = $this->analysis->factory($table);
+
+        if ($this->strategy === TableGenerator::STRATEGY_AI || $info === null) {
+            return null;
+        }
+
+        $columns = array_keys(array_filter($this->analysis->schema->table($table)->columns, fn ($column) => ! $column->generated));
+
+        return new FactorySource($this->db, $info, $table, $columns);
     }
 
     /**

@@ -3,7 +3,7 @@
 namespace AISeeder\Generation;
 
 use AISeeder\Schema\TableSchema;
-use Carbon\CarbonInterface;
+use DateTimeInterface;
 
 /**
  * Tracks values of unique indexes (existing and generated) so collisions are caught
@@ -65,7 +65,7 @@ final class UniqueTracker
             }
 
             $parts[] = match (true) {
-                $value instanceof CarbonInterface => $value->format('Y-m-d H:i:s'),
+                $value instanceof DateTimeInterface => $value->format('Y-m-d H:i:s'),
                 $value instanceof \BackedEnum => (string) $value->value,
                 is_bool($value) => $value ? '1' : '0',
                 default => mb_strtolower((string) $value),

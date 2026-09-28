@@ -15,6 +15,7 @@ use AISeeder\Environment\EnvironmentGuard;
 use AISeeder\Environment\TargetDatabase;
 use AISeeder\Environment\UnsupportedEnvironmentException;
 use AISeeder\Generation\GenerationStats;
+use AISeeder\Generation\TableGenerator;
 use AISeeder\Graph\CircularDependencyException;
 use AISeeder\Graph\DependencyOrder;
 use AISeeder\Graph\DependencyResolver;
@@ -49,7 +50,8 @@ class AiSeedCommand extends Command
         {--scenario= : Describe the data you want, e.g. "busy clinic with six months of history" (requires AI)}
         {--no-ai : Plan with built-in heuristics only}
         {--replan : Ask the AI for a new plan instead of reusing the cached one}
-        {--show-prompt : Print exactly what would be sent to the AI}';
+        {--show-prompt : Print exactly what would be sent to the AI}
+        {--strategy= : ai (default), factory (use model factories for values), or hybrid (factories for basic values, AI Seeder for relationships, distributions and timelines)}';
 
     protected $description = 'Generate realistic synthetic data for local, dev, development, or staging environments';
 
@@ -136,7 +138,7 @@ class AiSeedCommand extends Command
             return $this->noChangesMade(self::SUCCESS);
         }
 
-        $this->showPlan($plan, $order, $this->planNotes);
+        $this->showPlan($plan, $order, $this->planNotes, $options['strategy'], $analysis);
 
         $wipe = $options['fresh'] ? $this->tablesToWipe($analysis, $plan) : [];
 
@@ -152,11 +154,11 @@ class AiSeedCommand extends Command
             return $this->noChangesMade();
         }
 
-        return $this->generate($connection, $analysis, $plan, $order, $wipe, $environment);
+        return $this->generate($connection, $analysis, $plan, $order, $wipe, $environment, $options['strategy']);
     }
 
     /**
-     * @return array{seed: int, size: string, count: ?int, only: ?list<string>, except: list<string>, fresh: bool, scenario: ?string}
+     * @return array{seed: int, size: string, count: ?int, only: ?list<string>, except: list<string>, fresh: bool, scenario: ?string, strategy: string}
      */
     private function parseOptions(): array
     {
@@ -179,6 +181,12 @@ class AiSeedCommand extends Command
             throw new InvalidArgumentException('--seed must be a whole number.');
         }
 
+        $strategy = (string) ($this->option('strategy') ?? $this->laravel['config']->get('ai-seeder.strategy', TableGenerator::STRATEGY_AI));
+
+        if (! in_array($strategy, [TableGenerator::STRATEGY_AI, TableGenerator::STRATEGY_FACTORY, TableGenerator::STRATEGY_HYBRID], true)) {
+            throw new InvalidArgumentException('--strategy must be ai, factory, or hybrid.');
+        }
+
         $size = (string) ($this->option('size') ?? $this->laravel['config']->get('ai-seeder.size', 'medium'));
 
         if (! in_array($size, ['small', 'medium', 'large'], true)) {
@@ -193,6 +201,7 @@ class AiSeedCommand extends Command
             'except' => $except,
             'fresh' => (bool) $this->option('fresh'),
             'scenario' => trim((string) $this->option('scenario')) ?: null,
+            'strategy' => $strategy,
         ];
     }
 
@@ -246,6 +255,7 @@ class AiSeedCommand extends Command
         $this->line('<fg=green>✓</> '.count($analysis->schema->tables).' tables detected');
         $this->line("<fg=green>✓</> {$graph->relationshipCount()} relationships detected");
         $this->line('<fg=green>✓</> '.count($analysis->enums).' enums detected');
+        $this->line('<fg=green>✓</> '.count($analysis->factories).' factories detected');
         $this->newLine();
 
         if ($graph->entityTables() !== []) {
@@ -304,7 +314,7 @@ class AiSeedCommand extends Command
      * Builds the heuristic baseline and, when AI is available, merges the AI's validated
      * suggestions onto it. Suggestions are cached so re-runs are free and reproducible.
      *
-     * @param  array{seed: int, size: string, count: ?int, only: ?list<string>, except: list<string>, fresh: bool, scenario: ?string}  $options
+     * @param  array{seed: int, size: string, count: ?int, only: ?list<string>, except: list<string>, fresh: bool, scenario: ?string, strategy: string}  $options
      */
     private function plan(ProjectAnalysis $analysis, Connection $connection, array $options, ?AIProviderInterface $ai, PlanStore $plans): GenerationPlan
     {
@@ -415,7 +425,7 @@ class AiSeedCommand extends Command
     /**
      * @param  list<string>  $notes
      */
-    private function showPlan(GenerationPlan $plan, DependencyOrder $order, array $notes): void
+    private function showPlan(GenerationPlan $plan, DependencyOrder $order, array $notes, string $strategy, ProjectAnalysis $analysis): void
     {
         $this->line('<options=bold>Generation Plan</>');
         $this->newLine();
@@ -435,12 +445,26 @@ class AiSeedCommand extends Command
             : 'none'));
         $this->line("Seed:                    {$plan->seed}");
         $this->line('Timeline:                '.$plan->start->toDateString().' → '.$plan->end->toDateString());
+        $this->line("Strategy:                {$strategy}".$this->factorySummary($strategy, $plan, $analysis));
 
         foreach ($notes as $note) {
             $this->line("<fg=yellow>! {$note}</>");
         }
 
         $this->newLine();
+    }
+
+    private function factorySummary(string $strategy, GenerationPlan $plan, ProjectAnalysis $analysis): string
+    {
+        if ($strategy === TableGenerator::STRATEGY_AI) {
+            return '';
+        }
+
+        $tables = array_values(array_filter($plan->generatedTables(), fn (string $table) => $analysis->factory($table) !== null));
+
+        return $tables === []
+            ? ' (no factories found for the generated tables; AI Seeder generates all values)'
+            : ' (factories for '.implode(', ', $tables).')';
     }
 
     /**
@@ -524,7 +548,7 @@ class AiSeedCommand extends Command
     /**
      * @param  list<string>  $wipe
      */
-    private function generate(Connection $connection, ProjectAnalysis $analysis, GenerationPlan $plan, DependencyOrder $order, array $wipe, string $environment): int
+    private function generate(Connection $connection, ProjectAnalysis $analysis, GenerationPlan $plan, DependencyOrder $order, array $wipe, string $environment, string $strategy): int
     {
         $config = $this->laravel['config'];
         $country = strtoupper(explode('_', $plan->locale)[1] ?? 'US');
@@ -542,6 +566,7 @@ class AiSeedCommand extends Command
                 'currency' => (string) $config->get('ai-seeder.currency', 'USD'),
                 'app_locale' => (string) $config->get('app.locale', 'en'),
             ],
+            strategy: $strategy,
         );
 
         $bar = $this->output->createProgressBar($plan->totalRows());
@@ -598,6 +623,10 @@ class AiSeedCommand extends Command
 
         foreach ($stats->checks as $check) {
             $this->line("<fg=green>✓</> {$check}");
+        }
+
+        foreach ($stats->notes as $note) {
+            $this->line('<fg=yellow>! '.OutputFormatter::escape($note).'</>');
         }
 
         foreach ($stats->skipped as $table => $skipped) {

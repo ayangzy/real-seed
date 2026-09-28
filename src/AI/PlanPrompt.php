@@ -29,6 +29,7 @@ final class PlanPrompt
           the language and culture of the requested locale. Samples must be clearly fictional:
           never real people, real private contact details, or real customer records.
         - For enum/status columns give weights reflecting realistic proportions.
+        - When a table's factory has states, you may give state weights ("default" = no state).
         - Use present_when when a column only makes sense in some states
           (e.g. cancelled_at only when status is cancelled).
         - Only change a column's semantic when the baseline is clearly wrong.
@@ -70,6 +71,15 @@ final class PlanPrompt
                         'properties' => [
                             'table' => ['type' => 'string'],
                             'count' => ['type' => ['integer', 'null']],
+                            'states' => [
+                                'type' => ['array', 'null'],
+                                'description' => 'Factory state weights, only for tables that list factory states.',
+                                'items' => [
+                                    'type' => 'object',
+                                    'properties' => ['name' => ['type' => 'string'], 'weight' => ['type' => 'number']],
+                                    'required' => ['name', 'weight'],
+                                ],
+                            ],
                             'fields' => [
                                 'type' => 'array',
                                 'items' => [
@@ -103,7 +113,7 @@ final class PlanPrompt
                                 ],
                             ],
                         ],
-                        'required' => ['table', 'count', 'fields'],
+                        'required' => ['table', 'count', 'states', 'fields'],
                     ],
                 ],
             ],

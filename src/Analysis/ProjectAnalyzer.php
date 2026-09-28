@@ -8,7 +8,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\Migrations\Migrator;
 
 /**
- * Runs the analysis pipeline: migrations -> schema -> models -> enums -> graph.
+ * Runs the analysis pipeline: migrations -> schema -> models -> enums -> factories -> graph.
  */
 final class ProjectAnalyzer
 {
@@ -17,6 +17,7 @@ final class ProjectAnalyzer
         private readonly ModelFinder $modelFinder,
         private readonly ModelAnalyzer $modelAnalyzer,
         private readonly EnumAnalyzer $enumAnalyzer,
+        private readonly FactoryAnalyzer $factoryAnalyzer,
     ) {
     }
 
@@ -53,6 +54,7 @@ final class ProjectAnalyzer
             graph: SchemaGraph::build($schema, $models),
             migrations: $migrations,
             warnings: [...$this->schemaReader->warnings(), ...$this->modelAnalyzer->warnings()],
+            factories: $this->factoryAnalyzer->analyze($models),
         );
     }
 }

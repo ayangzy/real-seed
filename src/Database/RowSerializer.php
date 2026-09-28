@@ -5,7 +5,7 @@ namespace AISeeder\Database;
 use AISeeder\Analysis\ModelInfo;
 use AISeeder\Schema\TableSchema;
 use BackedEnum;
-use Carbon\CarbonInterface;
+use DateTimeInterface;
 use Illuminate\Contracts\Encryption\Encrypter;
 use UnitEnum;
 
@@ -38,7 +38,7 @@ final class RowSerializer
             $family = $table->column($column)?->family();
 
             $value = match (true) {
-                $value instanceof CarbonInterface => match ($family) {
+                $value instanceof DateTimeInterface => match ($family) {
                     'date' => $value->format('Y-m-d'),
                     'time' => $value->format('H:i:s'),
                     'year' => (int) $value->format('Y'),

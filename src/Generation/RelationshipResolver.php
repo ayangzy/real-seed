@@ -69,6 +69,26 @@ final class RelationshipResolver
     }
 
     /**
+     * Every column that holds a reference, including deferred and composite ones.
+     *
+     * @return list<string>
+     */
+    public function referenceColumns(string $table): array
+    {
+        $columns = [];
+
+        foreach ($this->graph->parentEdges($table) as $edge) {
+            array_push($columns, ...$edge->columns);
+        }
+
+        foreach ($this->graph->morphSlots($table) as $slot) {
+            array_push($columns, $slot->typeColumn, $slot->idColumn);
+        }
+
+        return array_values(array_unique($columns));
+    }
+
+    /**
      * @param  callable(): (int|string)  $selfKey  Resolves the row's own primary key (for a first self-referencing row).
      * @param  int  $row  The row's position in this run, used to give every parent at least one child.
      * @return array{values: array<string, mixed>, after: ?int}

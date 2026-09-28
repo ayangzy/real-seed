@@ -106,12 +106,15 @@ return [
     |--------------------------------------------------------------------------
     |
     | size:     small, medium, or large (overridden by --size)
+    | strategy: ai, factory, or hybrid (overridden by --strategy)
     | locale:   Faker locale for names, addresses, and phone numbers
     | currency: ISO code used for currency columns
     |
     */
 
     'size' => 'medium',
+
+    'strategy' => 'ai',
 
     'locale' => 'en_US',
 

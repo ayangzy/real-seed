@@ -123,7 +123,13 @@ final class PlanValidator
             $fields[$column] = $this->mergeField($plan, $fields[$column], $schema, $field, $count);
         }
 
-        return new TablePlan($plan->table, $count, $fields);
+        $options = $plan->options;
+
+        if (is_array($suggestion['states'] ?? null) && ($states = $this->factoryStates($plan->table, $suggestion['states'])) !== null) {
+            $options['factory_states'] = $states;
+        }
+
+        return new TablePlan($plan->table, $count, $fields, $options);
     }
 
     private function mergeField(TablePlan $table, FieldPlan $base, ColumnSchema $column, array $suggestion, int $count): FieldPlan
@@ -198,6 +204,30 @@ final class PlanValidator
         }
 
         return new FieldPlan($semantic, $options);
+    }
+
+    /**
+     * @return array<string, float>|null
+     */
+    private function factoryStates(string $table, array $items): ?array
+    {
+        $known = [...($this->analysis->factory($table)?->states ?? []), 'default'];
+        $weights = [];
+
+        foreach ($items as $item) {
+            $name = is_array($item) ? ($item['name'] ?? null) : null;
+            $weight = is_array($item) ? $this->finite($item['weight'] ?? null) : null;
+
+            if (! is_string($name) || ! in_array($name, $known, true) || $weight === null || $weight < 0) {
+                $this->warnings[] = 'Ignored factory state ['.(is_scalar($name) ? $name : '?')."] for [{$table}].";
+
+                continue;
+            }
+
+            $weights[$name] = $weight;
+        }
+
+        return count($known) > 1 && array_sum($weights) > 0 ? $weights : null;
     }
 
     private function compatible(string $semantic, ColumnSchema $column): bool
