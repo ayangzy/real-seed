@@ -1,5 +1,11 @@
 # RealSeed
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/ayangzy/real-seed.svg?style=flat-square)](https://packagist.org/packages/ayangzy/real-seed)
+[![Total Downloads](https://img.shields.io/packagist/dt/ayangzy/real-seed.svg?style=flat-square)](https://packagist.org/packages/ayangzy/real-seed)
+[![Tests](https://img.shields.io/github/actions/workflow/status/ayangzy/real-seed/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/ayangzy/real-seed/actions/workflows/tests.yml)
+[![PHP Version](https://img.shields.io/packagist/dependency-v/ayangzy/real-seed/php.svg?style=flat-square)](https://packagist.org/packages/ayangzy/real-seed)
+[![License](https://img.shields.io/packagist/l/ayangzy/real-seed.svg?style=flat-square)](LICENSE)
+
 **Realistic, relational, time-coherent synthetic data for your Laravel app, generated from your app's actual structure.**
 
 ```bash
