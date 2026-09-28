@@ -303,6 +303,27 @@ With `laravel/ai` installed, RealSeed asks your configured model (Anthropic, Ope
 - workflow rules, such as `cancelled_at` only when `status = cancelled`
 - factory state mixes
 
+### Setting it up
+
+```bash
+composer require laravel/ai        # Laravel 12+
+```
+
+```env
+# .env
+OPENAI_API_KEY=sk-...              # required: read by laravel/ai, not by RealSeed
+
+# Optional RealSeed settings (leave them out to use the defaults)
+REALSEED_AI_PROVIDER=openai        # anthropic, gemini, ollama, ... (default: laravel/ai's default, openai)
+REALSEED_AI_MODEL=gpt-5-mini       # default: the provider's default model
+```
+
+Using another provider means setting its key and the provider name, e.g. `ANTHROPIC_API_KEY=…` with `REALSEED_AI_PROVIDER=anthropic`. [Ollama](https://ollama.com) runs models locally for free with no key: `REALSEED_AI_PROVIDER=ollama` and `REALSEED_AI_MODEL=llama3.1`.
+
+Run `php artisan config:clear` after changing `.env`. The command reports the AI status on every run (`✓ AI planning: …` or `! AI planning: …`) and repeats it as "Planned by" in the plan and the summary.
+
+The matching config, for reference:
+
 ```php
 // config/realseed.php
 'ai' => [
