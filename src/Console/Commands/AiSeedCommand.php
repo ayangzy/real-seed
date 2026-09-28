@@ -11,6 +11,8 @@ use AISeeder\Analysis\ProjectAnalysis;
 use AISeeder\Analysis\ProjectAnalyzer;
 use AISeeder\Database\SeederExecutor;
 use AISeeder\Environment\ConnectionSafetyCheck;
+use AISeeder\Extension\ExtensionRegistry;
+use AISeeder\Extension\ScenarioProvider;
 use AISeeder\Environment\EnvironmentGuard;
 use AISeeder\Environment\TargetDatabase;
 use AISeeder\Environment\UnsupportedEnvironmentException;
@@ -19,6 +21,9 @@ use AISeeder\Generation\TableGenerator;
 use AISeeder\Graph\CircularDependencyException;
 use AISeeder\Graph\DependencyOrder;
 use AISeeder\Graph\DependencyResolver;
+use AISeeder\Locale\LocaleProvider;
+use AISeeder\Locale\LocaleRegistry;
+use AISeeder\Planning\ConfigOverrides;
 use AISeeder\Planning\GenerationPlan;
 use AISeeder\Planning\HeuristicPlanner;
 use AISeeder\Planning\PlanningException;
@@ -26,7 +31,6 @@ use AISeeder\Planning\PlanOptions;
 use AISeeder\Planning\PlanStore;
 use AISeeder\Planning\PlanValidator;
 use AISeeder\Validation\GenerationException;
-use Faker\Factory as FakerFactory;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Illuminate\Database\Connection;
@@ -51,6 +55,7 @@ class AiSeedCommand extends Command
         {--no-ai : Plan with built-in heuristics only}
         {--replan : Ask the AI for a new plan instead of reusing the cached one}
         {--show-prompt : Print exactly what would be sent to the AI}
+        {--locale= : Locale for names, addresses, phones and currency, e.g. ng, us, gb, de, or a Faker locale like pt_BR}
         {--strategy= : ai (default), factory (use model factories for values), or hybrid (factories for basic values, AI Seeder for relationships, distributions and timelines)}';
 
     protected $description = 'Generate realistic synthetic data for local, dev, development, or staging environments';
@@ -58,7 +63,7 @@ class AiSeedCommand extends Command
     /** @var list<string> */
     private array $planNotes = [];
 
-    public function handle(EnvironmentGuard $guard, ConnectionSafetyCheck $safety, ProjectAnalyzer $analyzer, AIProviderInterface $ai, PlanStore $plans): int
+    public function handle(EnvironmentGuard $guard, ConnectionSafetyCheck $safety, ProjectAnalyzer $analyzer, AIProviderInterface $ai, PlanStore $plans, LocaleRegistry $locales, ExtensionRegistry $extensions): int
     {
         $this->newLine();
         $this->line($this->option('dry-run') ? '<options=bold>AI Seeder — Dry Run</>' : '<options=bold>AI Seeder</>');
@@ -103,6 +108,9 @@ class AiSeedCommand extends Command
 
         try {
             $options = $this->parseOptions();
+            $extensions->validate();
+            $locale = $locales->resolve($options['locale']);
+            $scenario = $options['scenario'] !== null ? $extensions->scenario($options['scenario']) : null;
         } catch (InvalidArgumentException $e) {
             $this->line("<fg=red>✗ {$e->getMessage()}</>");
 
@@ -117,7 +125,8 @@ class AiSeedCommand extends Command
 
         $connection = $this->laravel['db']->connection($target->connection);
 
-        $useAi = $this->aiStatus($ai, $options['scenario']);
+        // Named scenarios come from code; only free-text scenarios need the AI.
+        $useAi = $this->aiStatus($ai, $scenario === null ? $options['scenario'] : null);
 
         if ($useAi === null) {
             return $this->noChangesMade();
@@ -125,8 +134,8 @@ class AiSeedCommand extends Command
 
         try {
             $order = (new DependencyResolver)->resolve($analysis->graph);
-            $plan = $this->plan($analysis, $connection, $options, $useAi ? $ai : null, $plans);
-        } catch (CircularDependencyException|PlanningException|AIProviderException $e) {
+            $plan = $this->plan($analysis, $connection, $options, $useAi ? $ai : null, $plans, $extensions, $scenario);
+        } catch (CircularDependencyException|PlanningException|AIProviderException|InvalidArgumentException $e) {
             $this->line("<fg=red>✗ {$e->getMessage()}</>");
 
             return $this->noChangesMade();
@@ -154,11 +163,11 @@ class AiSeedCommand extends Command
             return $this->noChangesMade();
         }
 
-        return $this->generate($connection, $analysis, $plan, $order, $wipe, $environment, $options['strategy']);
+        return $this->generate($connection, $analysis, $plan, $order, $wipe, $environment, $options['strategy'], $locale, $extensions);
     }
 
     /**
-     * @return array{seed: int, size: string, count: ?int, only: ?list<string>, except: list<string>, fresh: bool, scenario: ?string, strategy: string}
+     * @return array{seed: int, size: string, count: ?int, only: ?list<string>, except: list<string>, fresh: bool, scenario: ?string, strategy: string, locale: string}
      */
     private function parseOptions(): array
     {
@@ -202,6 +211,7 @@ class AiSeedCommand extends Command
             'fresh' => (bool) $this->option('fresh'),
             'scenario' => trim((string) $this->option('scenario')) ?: null,
             'strategy' => $strategy,
+            'locale' => (string) ($this->option('locale') ?? $this->laravel['config']->get('ai-seeder.locale', 'en_US')),
         ];
     }
 
@@ -311,22 +321,24 @@ class AiSeedCommand extends Command
     }
 
     /**
-     * Builds the heuristic baseline and, when AI is available, merges the AI's validated
-     * suggestions onto it. Suggestions are cached so re-runs are free and reproducible.
+     * Builds the plan in layers, each validated against the schema: heuristic baseline,
+     * then application analyzers, then AI suggestions (cached so re-runs are free and
+     * reproducible), then a named scenario, then config overrides, which always win.
      *
-     * @param  array{seed: int, size: string, count: ?int, only: ?list<string>, except: list<string>, fresh: bool, scenario: ?string, strategy: string}  $options
+     * @param  array{seed: int, size: string, count: ?int, only: ?list<string>, except: list<string>, fresh: bool, scenario: ?string, strategy: string, locale: string}  $options
      */
-    private function plan(ProjectAnalysis $analysis, Connection $connection, array $options, ?AIProviderInterface $ai, PlanStore $plans): GenerationPlan
+    private function plan(ProjectAnalysis $analysis, Connection $connection, array $options, ?AIProviderInterface $ai, PlanStore $plans, ExtensionRegistry $extensions, ?ScenarioProvider $scenario): GenerationPlan
     {
         $config = $this->laravel['config'];
-        $locale = (string) $config->get('ai-seeder.locale', 'en_US');
+        $locale = strtolower($options['locale']);
+        $scenarioText = $scenario !== null ? $scenario->description() : $options['scenario'];
         $planner = new HeuristicPlanner($analysis);
         $this->planNotes = [];
 
         $key = $plans->key([
             'schema' => $analysis->schema->hash(),
             'provider' => $ai?->name(),
-            'scenario' => $options['scenario'],
+            'scenario' => $scenarioText,
             'size' => $options['size'],
             'count' => $options['count'],
             'only' => $options['only'],
@@ -351,13 +363,53 @@ class AiSeedCommand extends Command
 
         $base = $planner->plan($planOptions);
         $this->planNotes = $planner->notes();
+        $validator = new PlanValidator($analysis, (int) $config->get('ai-seeder.max_rows', 250000));
 
+        // Developer knowledge refines the baseline before the AI sees it...
+        foreach ($extensions->analyzers() as $applicationAnalyzer) {
+            $base = $this->mergeTrusted($validator, $base, $applicationAnalyzer->suggestions($analysis, $base), $planOptions);
+        }
+
+        $requireAi = $scenario === null && $options['scenario'] !== null;
+        $plan = $this->aiPlan($analysis, $base, $planOptions, $ai, $plans, $key, $cached, $scenarioText, $validator, $requireAi);
+
+        // ...and named scenarios and configuration have the final say.
+        if ($scenario !== null) {
+            $plan = $this->mergeTrusted($validator, $plan, $scenario->suggestions($analysis, $plan), $planOptions);
+            $this->line('Scenario: '.OutputFormatter::escape($options['scenario']));
+        }
+
+        $overrides = (array) $config->get('ai-seeder.overrides', []);
+
+        if ($overrides !== []) {
+            $plan = $this->mergeTrusted($validator, $plan, ConfigOverrides::toSuggestions($overrides), $planOptions);
+        }
+
+        return $plan;
+    }
+
+    private function mergeTrusted(PlanValidator $validator, GenerationPlan $plan, array $suggestions, PlanOptions $options): GenerationPlan
+    {
+        $merged = $validator->merge($plan, $suggestions, $options, trusted: true);
+
+        foreach ($validator->warnings() as $warning) {
+            $this->line('<fg=yellow>! '.OutputFormatter::escape($warning).'</>');
+        }
+
+        return $merged;
+    }
+
+    /**
+     * @param  array{anchor: \Carbon\CarbonImmutable, provider: string, domain: ?string, suggestions: array}|null  $cached
+     */
+    private function aiPlan(ProjectAnalysis $analysis, GenerationPlan $base, PlanOptions $planOptions, ?AIProviderInterface $ai, PlanStore $plans, string $key, ?array $cached, ?string $scenarioText, PlanValidator $validator, bool $requireAi): GenerationPlan
+    {
         if ($this->option('show-prompt')) {
             $this->line('<options=bold>AI instructions</>');
             $this->line(OutputFormatter::escape(PlanPrompt::instructions()));
             $this->newLine();
             $this->line('<options=bold>AI prompt</>');
-            $this->line(OutputFormatter::escape(PlanPrompt::prompt(new ApplicationContext($analysis, $base), $base, $options['scenario'])));
+            $this->line(OutputFormatter::escape(PlanPrompt::prompt(new ApplicationContext($analysis, $base), $base, $scenarioText)));
             $this->newLine();
         }
 
@@ -374,14 +426,14 @@ class AiSeedCommand extends Command
 
                 $suggestions = $ai->generate(
                     PlanPrompt::instructions(),
-                    PlanPrompt::prompt(new ApplicationContext($analysis, $base), $base, $options['scenario']),
+                    PlanPrompt::prompt(new ApplicationContext($analysis, $base), $base, $scenarioText),
                     PlanPrompt::schema(),
                 );
 
-                $file = $plans->put($key, $base->end, $ai->name(), $options['scenario'], $suggestions);
+                $file = $plans->put($key, $base->end, $ai->name(), $scenarioText, $suggestions);
                 $this->line("<fg=green>✓</> AI plan saved to {$file}");
             } catch (AIProviderException $e) {
-                if ($options['scenario'] !== null) {
+                if ($requireAi) {
                     throw $e;
                 }
 
@@ -392,7 +444,6 @@ class AiSeedCommand extends Command
             }
         }
 
-        $validator = new PlanValidator($analysis, (int) $config->get('ai-seeder.max_rows', 250000));
         $plan = $validator->merge($base, $suggestions, $planOptions);
 
         if (is_string($suggestions['domain'] ?? null)) {
@@ -548,25 +599,21 @@ class AiSeedCommand extends Command
     /**
      * @param  list<string>  $wipe
      */
-    private function generate(Connection $connection, ProjectAnalysis $analysis, GenerationPlan $plan, DependencyOrder $order, array $wipe, string $environment, string $strategy): int
+    private function generate(Connection $connection, ProjectAnalysis $analysis, GenerationPlan $plan, DependencyOrder $order, array $wipe, string $environment, string $strategy, LocaleProvider $locale, ExtensionRegistry $extensions): int
     {
         $config = $this->laravel['config'];
-        $country = strtoupper(explode('_', $plan->locale)[1] ?? 'US');
 
         $executor = new SeederExecutor(
             db: $connection,
             analysis: $analysis,
-            faker: FakerFactory::create($plan->locale),
             hashPassword: fn () => $this->laravel['hash']->make('password'),
+            locale: $locale,
+            extensions: $extensions,
             encrypter: $this->encrypter(),
             maxChunk: (int) $config->get('ai-seeder.chunk_size', 500),
             existingRowsLimit: (int) $config->get('ai-seeder.existing_rows_limit', 100000),
-            localeDefaults: [
-                'country' => $country,
-                'currency' => (string) $config->get('ai-seeder.currency', 'USD'),
-                'app_locale' => (string) $config->get('app.locale', 'en'),
-            ],
             strategy: $strategy,
+            appLocale: (string) $config->get('app.locale', 'en'),
         );
 
         $bar = $this->output->createProgressBar($plan->totalRows());

@@ -2,6 +2,7 @@
 
 namespace AISeeder\Generation;
 
+use AISeeder\Extension\ExtensionRegistry;
 use AISeeder\Graph\Edge;
 use AISeeder\Planning\FieldPlan;
 use AISeeder\Planning\TablePlan;
@@ -37,6 +38,7 @@ final class TableGenerator
         private readonly RelationshipResolver $relations,
         private readonly KeyAllocator $keys,
         private readonly UniqueTracker $unique,
+        private readonly ?ExtensionRegistry $extensions = null,
     ) {
     }
 
@@ -131,7 +133,24 @@ final class TableGenerator
             $fromFactory = $factory->attributes($overrides, $this->factoryState($plan, $factory, $random)) ?? [];
         }
 
+        $fromCustom = [];
+
+        if (($rowGenerator = $this->extensions?->rowGenerator($schema->name)) !== null) {
+            $fromCustom = $rowGenerator->attributes(
+                $state->values,
+                CarbonImmutable::createFromTimestamp($time, date_default_timezone_get()),
+                $this->values->faker(),
+                $random,
+            );
+        }
+
         foreach ($ordered as [$column, $field, $columnSchema]) {
+            if (array_key_exists($column, $fromCustom)) {
+                $state->set($column, $field->semantic, $fromCustom[$column]);
+
+                continue;
+            }
+
             if (array_key_exists($column, $fromFactory) && $this->factoryWins($strategy, $field)) {
                 $state->set($column, $field->semantic, $fromFactory[$column]);
 

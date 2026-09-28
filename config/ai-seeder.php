@@ -107,8 +107,9 @@ return [
     |
     | size:     small, medium, or large (overridden by --size)
     | strategy: ai, factory, or hybrid (overridden by --strategy)
-    | locale:   Faker locale for names, addresses, and phone numbers
-    | currency: ISO code used for currency columns
+    | locale:   a country code (ng, us, gb, ca, au, de, fr, ...), a Faker locale
+    |           (pt_BR), or a key from "locales" below (overridden by --locale)
+    | currency: ISO code for currency columns; null uses the locale's currency
     |
     */
 
@@ -118,7 +119,60 @@ return [
 
     'locale' => 'en_US',
 
-    'currency' => 'USD',
+    'currency' => null,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Overrides
+    |--------------------------------------------------------------------------
+    |
+    | Your rules win over heuristics and AI suggestions (never over safety):
+    |
+    |   'users' => [
+    |       'count' => 200,
+    |       'states' => ['admin' => 1, 'default' => 20],   // factory states
+    |       'fields' => [
+    |           'status' => ['weights' => ['active' => 90, 'suspended' => 10]],
+    |           'bio' => ['samples' => ['Coffee first.', 'Runner and reader.']],
+    |           'phone' => ['semantic' => 'phone', 'null_rate' => 0.2],
+    |           'manager_id' => ['null_rate' => 0.5, 'selection' => 'uniform', 'scope' => false],
+    |           'deleted_at' => ['null_rate' => 0.98],
+    |           'suspended_at' => ['present_when' => ['status' => ['suspended']]],
+    |       ],
+    |   ],
+    |
+    */
+
+    'overrides' => [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Extensions
+    |--------------------------------------------------------------------------
+    |
+    | generators:        custom FieldGenerator classes by "table.column",
+    |                    "*.column", or "semantic:<semantic>"
+    | row_generators:    custom RowGenerator classes by table
+    | reference_pickers: custom ReferencePicker classes by "table.column"
+    | scenarios:         named ScenarioProvider classes, used as --scenario=<name>
+    | analyzers:         ApplicationAnalyzer classes applied to every plan
+    | locales:           custom LocaleProvider classes by code, used as --locale=<code>
+    |
+    | Contracts live in AISeeder\Extension and AISeeder\Locale.
+    |
+    */
+
+    'generators' => [],
+
+    'row_generators' => [],
+
+    'reference_pickers' => [],
+
+    'scenarios' => [],
+
+    'analyzers' => [],
+
+    'locales' => [],
 
     /*
     |--------------------------------------------------------------------------

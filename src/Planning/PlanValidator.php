@@ -46,6 +46,8 @@ final class PlanValidator
     /** @var list<string> */
     private array $warnings = [];
 
+    private bool $trusted = false;
+
     public function __construct(
         private readonly ProjectAnalysis $analysis,
         private readonly int $maxRows = 250000,
@@ -54,10 +56,13 @@ final class PlanValidator
 
     /**
      * @param  array<string, mixed>  $suggestions  Decoded AI output (see PlanPrompt::schema()).
+     * @param  bool  $trusted  Developer-provided (config, scenario providers, analyzers): counts are
+     *                         honoured as given instead of being clamped. Everything is still validated.
      */
-    public function merge(GenerationPlan $base, array $suggestions, PlanOptions $options): GenerationPlan
+    public function merge(GenerationPlan $base, array $suggestions, PlanOptions $options, bool $trusted = false): GenerationPlan
     {
         $this->warnings = [];
+        $this->trusted = $trusted;
         $tables = $base->tables;
 
         foreach ((array) ($suggestions['tables'] ?? []) as $suggestion) {
@@ -102,7 +107,9 @@ final class PlanValidator
 
         // Tables outside this run's selection stay at zero whatever the AI says.
         if ($count > 0 && is_numeric($suggestion['count'] ?? null)) {
-            $count = max(1, min((int) $suggestion['count'], max(10, $plan->count * 10)));
+            $count = $this->trusted
+                ? max(1, (int) $suggestion['count'])
+                : max(1, min((int) $suggestion['count'], max(10, $plan->count * 10)));
         }
 
         $fields = $plan->fields;
@@ -136,11 +143,13 @@ final class PlanValidator
     {
         $where = "{$table->table}.{$column->name}";
 
-        if (in_array($base->semantic, [Semantic::KEY, Semantic::REFERENCE, Semantic::MORPH_TYPE, Semantic::MORPH_ID], true)) {
-            // Structure comes from the schema; only the share of empty optional references may be tuned.
-            return $base->semantic === Semantic::REFERENCE && $column->nullable && is_numeric($suggestion['null_rate'] ?? null)
-                ? $base->with(['null_rate' => $this->rate($suggestion['null_rate'])])
-                : $base;
+        if (in_array($base->semantic, [Semantic::KEY, Semantic::MORPH_TYPE, Semantic::MORPH_ID], true)) {
+            return $base; // Structure comes from the schema.
+        }
+
+        if ($base->semantic === Semantic::REFERENCE) {
+            // Which parent is referenced is structural; how parents are chosen can be tuned.
+            return $base->with($this->referenceRules($table->table, $column, $suggestion));
         }
 
         $semantic = $base->semantic;
@@ -204,6 +213,29 @@ final class PlanValidator
         }
 
         return new FieldPlan($semantic, $options);
+    }
+
+    private function referenceRules(string $table, ColumnSchema $column, array $suggestion): array
+    {
+        $rules = [];
+
+        if ($column->nullable && is_numeric($suggestion['null_rate'] ?? null)) {
+            $rules['null_rate'] = $this->rate($suggestion['null_rate']);
+        }
+
+        if (in_array($suggestion['selection'] ?? null, ['skewed', 'uniform'], true)) {
+            $rules['selection'] = $suggestion['selection'];
+        }
+
+        $scope = $suggestion['scope'] ?? null;
+
+        if ($scope === false || $scope === 'none' || (is_string($scope) && $this->analysis->schema->has($scope))) {
+            $rules['scope'] = $scope;
+        } elseif ($scope !== null) {
+            $this->warnings[] = "Ignored scope for [{$table}.{$column->name}]: unknown table.";
+        }
+
+        return $rules;
     }
 
     /**

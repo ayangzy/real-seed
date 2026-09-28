@@ -2,6 +2,9 @@
 
 namespace AISeeder\Generation;
 
+use AISeeder\Extension\ExtensionRegistry;
+use AISeeder\Extension\ReferenceContext;
+use AISeeder\Extension\ReferencePicker;
 use AISeeder\Graph\DependencyOrder;
 use AISeeder\Graph\Edge;
 use AISeeder\Graph\MorphSlot;
@@ -43,6 +46,7 @@ final class RelationshipResolver
     public function __construct(
         private readonly SchemaGraph $graph,
         private readonly DependencyOrder $order,
+        private readonly ?ExtensionRegistry $extensions = null,
     ) {
     }
 
@@ -66,6 +70,23 @@ final class RelationshipResolver
         usort($edges, fn (Edge $a, Edge $b) => [$a->nullable, $a->isSelfReferencing(), $a->describe()] <=> [$b->nullable, $b->isSelfReferencing(), $b->describe()]);
 
         return $this->slots[$table] = [...$edges, ...$this->graph->morphSlots($table)];
+    }
+
+    /**
+     * Lets a registered ReferencePicker choose among the candidates. Anything it returns
+     * that isn't a candidate is ignored.
+     *
+     * @param  list<int>|null  $candidates
+     */
+    private function pickWith(ReferencePicker $picker, string $table, Edge $edge, RowStore $store, ?array $candidates, array $values, SeededRandom $random): ?int
+    {
+        $pool = $candidates ?? ($store->count > 0 ? range(0, $store->count - 1) : []);
+        $keys = array_map(fn (int $index) => $store->value($index, $edge->parentColumns[0]), $pool);
+
+        $chosen = $picker->pick(new ReferenceContext($table, $edge->columns[0], $edge->parent, $keys, $values, $random));
+        $index = $store->indexOf($edge->parentColumns[0], $chosen);
+
+        return $index !== null && isset(array_flip($pool)[$index]) ? $index : null;
     }
 
     /**
@@ -158,6 +179,17 @@ final class RelationshipResolver
                 }
 
                 throw new RuntimeException("Every row of [{$edge->parent}] is already referenced by the unique column [{$table}.{$column}].");
+            }
+        } elseif (($picker = $this->extensions?->referencePicker($table, $column)) !== null) {
+            $candidates = $this->scopedCandidates($edge->parent, $context, $edge->isSelfReferencing() ? $table : null, $field?->option('scope'));
+            $index = $this->pickWith($picker, $table, $edge, $store, $candidates, $values, $random);
+
+            if ($index === null) {
+                if ($edge->nullable) {
+                    return null;
+                }
+
+                $index = $this->pick($candidates ?: null, $store->count, (string) ($field?->option('selection') ?? 'skewed'), $random);
             }
         } elseif ($coverageRow !== null && $coverageRow < $store->count) {
             // Real data rarely has a parent with no children (an organization without

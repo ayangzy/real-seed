@@ -3,6 +3,7 @@
 namespace AISeeder\Database;
 
 use AISeeder\Analysis\ProjectAnalysis;
+use AISeeder\Extension\ExtensionRegistry;
 use AISeeder\Generation\FactorySource;
 use AISeeder\Generation\GenerationStats;
 use AISeeder\Generation\KeyAllocator;
@@ -14,6 +15,8 @@ use AISeeder\Generation\TemporalGenerator;
 use AISeeder\Generation\UniqueTracker;
 use AISeeder\Generation\ValueGenerator;
 use AISeeder\Graph\DependencyOrder;
+use AISeeder\Locale\FakerLocale;
+use AISeeder\Locale\LocaleProvider;
 use AISeeder\Graph\Edge;
 use AISeeder\Planning\GenerationPlan;
 use AISeeder\Schema\TableSchema;
@@ -21,6 +24,7 @@ use AISeeder\Validation\GenerationException;
 use AISeeder\Validation\GenerationValidator;
 use Carbon\CarbonImmutable;
 use Closure;
+use Faker\Factory as FakerFactory;
 use Faker\Generator as Faker;
 use Illuminate\Contracts\Encryption\Encrypter;
 use Illuminate\Database\Connection;
@@ -38,20 +42,24 @@ final class SeederExecutor
 
     private ?Closure $progress = null;
 
+    private readonly Faker $faker;
+
     /**
      * @param  Closure(): string  $hashPassword
      */
     public function __construct(
         private readonly Connection $db,
         private readonly ProjectAnalysis $analysis,
-        private readonly Faker $faker,
         private readonly Closure $hashPassword,
+        private readonly LocaleProvider $locale = new FakerLocale,
+        private readonly ?ExtensionRegistry $extensions = null,
         private readonly ?Encrypter $encrypter = null,
         private readonly int $maxChunk = 500,
         private readonly int $existingRowsLimit = 100000,
-        private readonly array $localeDefaults = ['country' => 'US', 'currency' => 'USD', 'app_locale' => 'en'],
         private readonly string $strategy = TableGenerator::STRATEGY_AI,
+        private readonly string $appLocale = 'en',
     ) {
+        $this->faker = FakerFactory::create($locale->fakerLocale());
     }
 
     /**
@@ -103,16 +111,13 @@ final class SeederExecutor
     {
         $graph = $this->analysis->graph;
         $timeline = new TemporalGenerator($plan->start->getTimestamp(), $plan->end->getTimestamp());
-        $relations = new RelationshipResolver($graph, $order);
+        $relations = new RelationshipResolver($graph, $order, $this->extensions);
         $keys = new KeyAllocator;
         $unique = new UniqueTracker;
         $serializer = new RowSerializer($this->db->getQueryGrammar()->getDateFormat(), $this->encrypter);
         $validator = new GenerationValidator;
 
-        $values = new ValueGenerator(
-            $this->faker, $timeline, $this->hashPassword,
-            $this->localeDefaults['country'], $this->localeDefaults['currency'], $this->localeDefaults['app_locale'],
-        );
+        $values = new ValueGenerator($this->faker, $timeline, $this->hashPassword, $this->locale, $this->extensions, $this->appLocale);
 
         $generated = $plan->generatedTables();
 
@@ -120,7 +125,7 @@ final class SeederExecutor
             $relations->stores[$table] = $this->loadExisting($this->analysis->schema->table($table), $plan, in_array($table, $generated, true), $unique, $keys);
         }
 
-        $generator = new TableGenerator($values, $timeline, $relations, $keys, $unique);
+        $generator = new TableGenerator($values, $timeline, $relations, $keys, $unique, $this->extensions);
 
         foreach ($order->tables as $table) {
             $tablePlan = $plan->table($table);

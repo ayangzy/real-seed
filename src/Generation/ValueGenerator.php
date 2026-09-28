@@ -2,6 +2,10 @@
 
 namespace AISeeder\Generation;
 
+use AISeeder\Extension\ExtensionRegistry;
+use AISeeder\Extension\FieldContext;
+use AISeeder\Locale\FakerLocale;
+use AISeeder\Locale\LocaleProvider;
 use AISeeder\Planning\FieldPlan;
 use AISeeder\Schema\ColumnSchema;
 use AISeeder\Semantics\Semantic;
@@ -31,8 +35,8 @@ final class ValueGenerator
         private readonly Faker $faker,
         private readonly TemporalGenerator $time,
         private readonly Closure $hashPassword,
-        private readonly string $countryCode = 'US',
-        private readonly string $currency = 'USD',
+        private readonly LocaleProvider $locale = new FakerLocale,
+        private readonly ?ExtensionRegistry $extensions = null,
         private readonly string $appLocale = 'en',
     ) {
     }
@@ -56,10 +60,21 @@ final class ValueGenerator
             return null;
         }
 
+        $context = new FieldContext($row->table, $column, $plan, $row, $this->faker, $random);
+
+        // Developer code first, then plan samples, then the locale, then the defaults.
+        if (($custom = $this->extensions?->fieldGenerator($row->table, $column->name, $plan->semantic)) !== null) {
+            return $this->fit($custom->generate($context), $column);
+        }
+
         $samples = $plan->option('samples');
 
         if (is_array($samples) && $samples !== [] && ! $this->isTemporal($plan->semantic)) {
             return $this->fit($random->pick(array_values($samples)), $column);
+        }
+
+        if (($localized = $this->locale->value($plan->semantic, $context)) !== null) {
+            return $this->fit($localized, $column);
         }
 
         return $this->fit($this->value($plan, $column, $row, $random), $column);
@@ -86,7 +101,7 @@ final class ValueGenerator
             Semantic::STATE => $this->tryFaker(['state', 'county', 'region'], fn () => $faker->city()),
             Semantic::POSTCODE => $faker->postcode(),
             Semantic::COUNTRY => $this->countryName(),
-            Semantic::COUNTRY_CODE => $this->countryCode,
+            Semantic::COUNTRY_CODE => $this->locale->countryCode(),
             Semantic::LATITUDE => round($faker->latitude(), 6),
             Semantic::LONGITUDE => round($faker->longitude(), 6),
 
@@ -123,7 +138,7 @@ final class ValueGenerator
             Semantic::TOKEN => $random->string(min(60, $column->maxLength() ?? 60)),
             Semantic::JSON => '[]',
             Semantic::COLOR => $faker->hexColor(),
-            Semantic::CURRENCY => $this->currency,
+            Semantic::CURRENCY => $this->locale->currency(),
             Semantic::LOCALE => $this->appLocale,
             Semantic::TIMEZONE => $faker->timezone(),
             Semantic::NULL => $column->nullable ? null : '',
@@ -344,7 +359,7 @@ final class ValueGenerator
     {
         // Locale needs ext-intl, which isn't guaranteed.
         return class_exists(\Locale::class)
-            ? (\Locale::getDisplayRegion('-'.$this->countryCode, 'en') ?: $this->faker->country())
+            ? (\Locale::getDisplayRegion('-'.$this->locale->countryCode(), 'en') ?: $this->faker->country())
             : $this->faker->country();
     }
 

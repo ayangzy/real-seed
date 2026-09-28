@@ -6,6 +6,8 @@ use AISeeder\AI\AIProviderInterface;
 use AISeeder\AI\Providers\LaravelAiProvider;
 use AISeeder\AI\Providers\NullProvider;
 use AISeeder\Console\Commands\AiSeedCommand;
+use AISeeder\Extension\ExtensionRegistry;
+use AISeeder\Locale\LocaleRegistry;
 use AISeeder\Planning\PlanStore;
 use Illuminate\Support\ServiceProvider;
 
@@ -25,6 +27,20 @@ class AISeederServiceProvider extends ServiceProvider
                 default => new NullProvider('Unknown AI driver ['.(is_string($driver) ? $driver : get_debug_type($driver)).'].'),
             };
         });
+
+        $this->app->singleton(ExtensionRegistry::class, fn ($app) => new ExtensionRegistry($app, [
+            'generators' => (array) $app['config']->get('ai-seeder.generators', []),
+            'row_generators' => (array) $app['config']->get('ai-seeder.row_generators', []),
+            'reference_pickers' => (array) $app['config']->get('ai-seeder.reference_pickers', []),
+            'scenarios' => (array) $app['config']->get('ai-seeder.scenarios', []),
+            'analyzers' => (array) $app['config']->get('ai-seeder.analyzers', []),
+        ]));
+
+        $this->app->singleton(LocaleRegistry::class, fn ($app) => new LocaleRegistry(
+            $app,
+            (array) $app['config']->get('ai-seeder.locales', []),
+            $app['config']->get('ai-seeder.currency'),
+        ));
 
         $this->app->singleton(PlanStore::class, fn ($app) => new PlanStore(
             $app['files'],

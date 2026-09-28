@@ -37,6 +37,16 @@ abstract class TestCase extends Orchestra
         parent::tearDown();
     }
 
+    /**
+     * Registries are singletons built from config; rebuild them after changing config in a test.
+     */
+    protected function refreshApplicationBindings(): void
+    {
+        foreach ([\AISeeder\Extension\ExtensionRegistry::class, \AISeeder\Locale\LocaleRegistry::class] as $abstract) {
+            $this->app->forgetInstance($abstract);
+        }
+    }
+
     protected function setEnvironment(mixed $environment): void
     {
         $this->app['env'] = $environment;
