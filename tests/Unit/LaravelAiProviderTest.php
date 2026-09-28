@@ -42,3 +42,27 @@ it('names itself for the plan cache', function () {
     expect((new LaravelAiProvider('openai', 'gpt-5'))->name())->toBe('laravel-ai:openai/gpt-5')
         ->and((new LaravelAiProvider)->name())->toBe('laravel-ai:default');
 });
+
+function providerError(int $status, array $body): \Laravel\Ai\Exceptions\RateLimitedException
+{
+    $response = new \Illuminate\Http\Client\Response(new \GuzzleHttp\Psr7\Response($status, ['Content-Type' => 'application/json'], json_encode($body)));
+
+    return \Laravel\Ai\Exceptions\RateLimitedException::forProvider('openai', $status, new \Illuminate\Http\Client\RequestException($response));
+}
+
+it('explains a 429 caused by an account without credit', function () {
+    StructuredAnonymousAgent::fake(fn () => throw providerError(429, ['error' => [
+        'message' => 'You exceeded your current quota, please check your plan and billing details.',
+        'type' => 'insufficient_quota', 'code' => 'insufficient_quota',
+    ]]));
+
+    (new LaravelAiProvider)->generate('instructions', 'prompt', PlanPrompt::schema());
+})->throws(AIProviderException::class, 'Provider says: You exceeded your current quota, please check your plan and billing details. (insufficient_quota) The account has no API credit');
+
+it('explains a real rate limit with the prompt size', function () {
+    StructuredAnonymousAgent::fake(fn () => throw providerError(429, ['error' => [
+        'message' => 'Rate limit reached for requests per minute.', 'code' => 'rate_limit_exceeded',
+    ]]));
+
+    (new LaravelAiProvider)->generate('instructions', str_repeat('x', 4000), PlanPrompt::schema());
+})->throws(AIProviderException::class, 'The prompt was about 1,003 tokens; wait a minute and retry');

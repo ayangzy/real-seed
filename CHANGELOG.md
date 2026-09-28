@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.2
+
+- AI failures now include the provider's own explanation. `laravel/ai` reports every HTTP 429 as "rate limited", but OpenAI also uses 429 for accounts without API credit; RealSeed now shows which it is, with a hint (add billing, or wait and retry with the prompt's size in tokens).
+
 ## v0.2.1
 
 - The AI planning status is now highlighted (✓ or !), repeated in the plan ("Planned by: …") and in the final summary.

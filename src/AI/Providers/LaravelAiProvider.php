@@ -5,6 +5,7 @@ namespace Ayangzy\RealSeed\AI\Providers;
 use Ayangzy\RealSeed\AI\AIProviderException;
 use Ayangzy\RealSeed\AI\AIProviderInterface;
 use Closure;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Throwable;
 
@@ -43,7 +44,7 @@ final class LaravelAiProvider implements AIProviderInterface
             $response = agent(instructions: $instructions, schema: $this->schemaBuilder($schema))
                 ->prompt($prompt, provider: $this->provider, model: $this->model, timeout: $this->timeout);
         } catch (Throwable $e) {
-            throw new AIProviderException('The AI request failed: '.$e->getMessage(), previous: $e);
+            throw new AIProviderException($this->explain($e, $instructions.$prompt), previous: $e);
         }
 
         $structured = method_exists($response, 'toArray') ? $response->toArray() : null;
@@ -53,6 +54,41 @@ final class LaravelAiProvider implements AIProviderInterface
         }
 
         return $structured;
+    }
+
+    /**
+     * The SDK reports every HTTP 429 as "rate limited", but providers use 429 both for
+     * real rate limits and for accounts without credit. Surface the provider's own
+     * explanation and a hint, so the developer knows which one it is.
+     */
+    private function explain(Throwable $e, string $sent): string
+    {
+        $message = 'The AI request failed: '.$e->getMessage();
+        $details = null;
+
+        for ($cause = $e; $cause !== null; $cause = $cause->getPrevious()) {
+            if ($cause instanceof RequestException && $cause->response !== null) {
+                $error = $cause->response->json('error');
+                $details = is_array($error)
+                    ? trim(($error['message'] ?? '').(isset($error['code']) || isset($error['type']) ? ' ('.($error['code'] ?? $error['type']).')' : ''))
+                    : (is_string($error) ? $error : null);
+                break;
+            }
+        }
+
+        if ($details !== null && $details !== '') {
+            $message .= ' Provider says: '.$details;
+        }
+
+        $hint = match (true) {
+            str_contains((string) $details, 'insufficient_quota') || str_contains(strtolower((string) $details), 'quota') || str_contains(strtolower((string) $details), 'credit')
+                => ' The account has no API credit: add billing with your AI provider (API usage is billed separately from chat subscriptions).',
+            str_contains($e->getMessage(), 'rate limited') || str_contains((string) $details, 'rate_limit')
+                => sprintf(' The prompt was about %s tokens; wait a minute and retry, or choose a model with higher limits (REALSEED_AI_MODEL).', number_format((int) (mb_strlen($sent) / 4))),
+            default => '',
+        };
+
+        return $message.$hint;
     }
 
     /**
