@@ -212,3 +212,22 @@ it('shows how the data was planned in the summary', function () {
 
     expect(Artisan::output())->toContain('✓ AI planning: fake')->toContain('Planned by: AI (fake)');
 });
+
+it('plans only the selected tables with AI, using the whole schema as context', function () {
+    $fake = useAi(suggestions([
+        'tables' => [
+            ['table' => 'tasks', 'count' => 12, 'states' => null, 'fields' => [field('title', samples: TASK_TITLES)]],
+            ['table' => 'comments', 'count' => 500, 'states' => null, 'fields' => []], // not selected: must be ignored
+        ],
+    ]));
+
+    expect(runSeeder(['--only' => 'tasks']))->toBe(0);
+
+    expect($fake->calls[0]['prompt'])
+        ->toContain('## tasks')
+        ->toContain('## comments')          // context: the AI sees how tasks relate to everything
+        ->toMatch('/## comments.*not generated in this run/')
+        ->and(DB::table('tasks')->count())->toBe(12)
+        ->and(DB::table('tasks')->pluck('title')->unique()->diff(TASK_TITLES))->toBeEmpty()
+        ->and(DB::table('comments')->count())->toBe(0);
+});
