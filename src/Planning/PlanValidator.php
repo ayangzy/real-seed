@@ -398,7 +398,7 @@ final class PlanValidator
                     continue;
                 }
 
-                $available = $tables[$edge->parent]->count + ($options->fresh ? 0 : ($options->existingCounts[$edge->parent] ?? 0));
+                $available = $tables[$edge->parent]->count + $options->existing($edge->parent);
 
                 if ($tables[$name]->count > $available) {
                     $tables[$name] = $tables[$name]->withCount($available);

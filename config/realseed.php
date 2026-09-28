@@ -102,6 +102,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Protected Tables
+    |--------------------------------------------------------------------------
+    |
+    | Tables that hold real data you care about (roles, permissions, plans,
+    | your product catalogue, ...). RealSeed never adds rows to them and never
+    | deletes from them, not even with --fresh, but still links generated data
+    | to their existing rows. Unlike excluded_tables, they stay in the analysis.
+    |
+    */
+
+    'protected_tables' => [],
+
+    /*
+    |--------------------------------------------------------------------------
     | Polymorphic Targets
     |--------------------------------------------------------------------------
     |

@@ -53,7 +53,7 @@ final class HeuristicPlanner
 
         foreach ($order->tables as $table) {
             $schema = $graph->schema->table($table);
-            $existing = $options->fresh ? 0 : ($options->existingCounts[$table] ?? 0);
+            $existing = $options->existing($table);
 
             $count = match (true) {
                 isset($targets[$table]) => $counts[$table],
@@ -110,15 +110,21 @@ final class HeuristicPlanner
     {
         $all = $order->tables;
 
-        foreach ([...($options->only ?? []), ...$options->except] as $table) {
+        foreach ([...($options->only ?? []), ...$options->except, ...$options->protected] as $table) {
             if (! in_array($table, $all, true)) {
                 throw new PlanningException("Unknown table [{$table}]. Known tables: ".implode(', ', $all).'.');
             }
         }
 
+        foreach ($options->only ?? [] as $table) {
+            if ($options->isProtected($table)) {
+                throw new PlanningException("[{$table}] is in protected_tables, so RealSeed never generates rows for it.");
+            }
+        }
+
         $targets = $options->only !== null
             ? array_fill_keys($options->only, true)
-            : array_fill_keys(array_diff($all, $options->except), true);
+            : array_fill_keys(array_diff($all, $options->except, $options->protected), true);
 
         $dependencies = [];
 
@@ -127,8 +133,12 @@ final class HeuristicPlanner
                 continue;
             }
 
+            if ($options->isProtected($table)) {
+                continue; // Its existing rows are reused; if it's empty, dependents are skipped with a note.
+            }
+
             if (in_array($table, $options->except, true)) {
-                if (($options->fresh ? 0 : ($options->existingCounts[$table] ?? 0)) === 0) {
+                if ($options->existing($table) === 0) {
                     throw new PlanningException("Cannot skip [{$table}]: other tables require it and it has no rows.");
                 }
 
@@ -272,7 +282,8 @@ final class HeuristicPlanner
 
                 if ($missing !== []) {
                     $missing = array_values(array_unique($missing));
-                    $this->notes[] = "Skipping [{$table}]: it needs rows in [".implode(', ', $missing).'], '
+                    $labels = array_map(fn (string $name) => $options->isProtected($name) ? "{$name} (protected)" : $name, $missing);
+                    $this->notes[] = "Skipping [{$table}]: it needs rows in [".implode(', ', $labels).'], '
                         .(count($missing) === 1 ? 'which is empty and not being generated.' : 'which are empty and not being generated.');
                     $tables[$table] = $tables[$table]->withCount(0);
                     $changed = true;
@@ -303,7 +314,7 @@ final class HeuristicPlanner
      */
     private function hasRows(string $table, array $tables, PlanOptions $options): bool
     {
-        return ($tables[$table]->count ?? 0) > 0 || (! $options->fresh && ($options->existingCounts[$table] ?? 0) > 0);
+        return ($tables[$table]->count ?? 0) > 0 || $options->existing($table) > 0;
     }
 
     private function unsupportedReason(string $table): ?string

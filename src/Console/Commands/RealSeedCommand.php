@@ -159,6 +159,14 @@ class RealSeedCommand extends Command
         $this->showPlan($plan, $order, $this->planNotes, $options['strategy'], $analysis);
 
         $wipe = $options['fresh'] ? $this->tablesToWipe($analysis, $plan) : [];
+        $protectedInWipe = array_values(array_intersect($wipe, (array) $this->laravel['config']->get('realseed.protected_tables', [])));
+
+        if ($protectedInWipe !== []) {
+            $this->line('<fg=red>✗ --fresh would delete rows in protected tables ['.implode(', ', $protectedInWipe).'], because they reference tables being regenerated.</>');
+            $this->line('Run without --fresh, or protect the tables they reference too.');
+
+            return $this->noChangesMade();
+        }
 
         if ($wipe !== []) {
             $this->showWipe($connection, $wipe);
@@ -373,6 +381,7 @@ class RealSeedCommand extends Command
             now: $cached['anchor'] ?? null,
             scenario: $options['scenario'],
             fresh: $options['fresh'],
+            protected: array_values((array) $config->get('realseed.protected_tables', [])),
         );
 
         $base = $planner->plan($planOptions);
@@ -516,6 +525,10 @@ class RealSeedCommand extends Command
         $this->line("Seed:                    {$plan->seed}");
         $this->line('Timeline:                '.$plan->start->toDateString().' → '.$plan->end->toDateString());
         $this->line("Strategy:                {$strategy}".$this->factorySummary($strategy, $plan, $analysis));
+
+        if (($protected = (array) $this->laravel['config']->get('realseed.protected_tables', [])) !== []) {
+            $this->line('Protected:               '.implode(', ', $protected).' (never generated into or deleted)');
+        }
 
         foreach ($notes as $note) {
             $this->line("<fg=yellow>! {$note}</>");

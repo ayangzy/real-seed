@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.0
+
+- New: `protected_tables` config. Protected tables are never generated into or deleted (not even by `--fresh`) but are still used as parents for generated data. Skip notes mark protected tables.
+- No-AI text is now readable. Common tables (tasks, projects, products, posts, comments, events, courses, categories, teams, properties, …) get realistic built-in values; `*_name` columns use their own entity (`bank_name` gives real banks for the locale); everything else gets neutral wording built from the table name. Faker's `bs()`, `catchPhrase()`, `realText()` (Alice in Wonderland) and lorem words are no longer used.
+- Fix: a required polymorphic link failed when nothing matched the row's scope (e.g. a commenter's organization with no projects). It now falls back to any valid target.
+
 ## v0.1.6
 
 - Fix: pivots declared with `morphedByMany` (e.g. spatie/laravel-permission's `Permission::users()` over `model_has_permissions`) were read in the wrong direction: `model_id` was linked to the wrong table and treated both as a polymorphic id and a plain link, failing with "rows reference missing [users] rows". Both directions are now understood, and a polymorphic id column is never also treated as a plain link.

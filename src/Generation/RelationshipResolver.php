@@ -244,6 +244,16 @@ final class RelationshipResolver
             $options[$morphClass] = [$target, $candidates, (float) ($weights[$morphClass] ?? $store->count)];
         }
 
+        if ($options === [] && ! $slot->nullable) {
+            // Nothing fits the row's scope (e.g. the commenter's organization has no
+            // projects yet). A required link still needs a target, so use any row.
+            foreach ($slot->targets as $morphClass => $target) {
+                if (($this->stores[$target] ?? null)?->count > 0) {
+                    $options[$morphClass] = [$target, null, (float) ($weights[$morphClass] ?? $this->stores[$target]->count)];
+                }
+            }
+        }
+
         if ($options === []) {
             if ($slot->nullable) {
                 return null;

@@ -38,7 +38,7 @@ Order #15    status: delivered            delivered_at: 2026-04-18 14:02
 User #3      41 comments                  User #4: 6 comments       User #5: 0 comments ...
 ```
 
-Relationships, timelines, statuses and activity patterns work out of the box, with no AI keys needed. Domain-specific text such as task titles comes from [AI planning](#ai-planning) or from samples you provide.
+Relationships, timelines, statuses, activity patterns and readable text for common tables (tasks, products, posts, comments, …) all work out of the box, with no AI keys needed. [AI planning](#ai-planning) adds text written for *your* domain, and you can supply your own samples.
 
 ## What RealSeed does
 
@@ -75,6 +75,7 @@ It is **not** a Faker wrapper. Faker generates values; RealSeed generates *an ap
 - [Locales](#locales)
 - [Configuration and overrides](#configuration-and-overrides)
 - [Extending RealSeed](#extending-realseed)
+- [Protecting real data](#protecting-real-data)
 - [Staging and destructive operations](#staging-and-destructive-operations)
 - [Performance](#performance)
 - [Database support](#database-support)
@@ -343,6 +344,14 @@ php artisan real:seed --no-ai
 
 This mode needs no AI package or network access. It uses schema analysis, relationships, field inference (`first_name`, `email`, `price`, `*_at`, `status`, …), enum-aware distributions, workflow linking (`completed_at` ↔ `status`), your factories, and your configuration. It's also what runs when no AI provider is available.
 
+Text stays readable without AI:
+
+- **Common tables get realistic built-in values.** Tasks and tickets, projects, products, posts, comments and reviews, events and appointments, courses, categories and tags, teams and departments, properties, campaigns, documents, services, plans, jobs, branches, announcements, FAQs and invoice or order lines. For example, `tasks.title` → "Reconcile March bank statement", and `products.name` → "Stainless Steel Water Bottle 750ml".
+- **`*_name` columns use their own entity.** `product_name` gets product names, and `bank_name` gets real banks for the locale (Access Bank, GTBank, … for `ng`).
+- **Anything else gets plain, neutral wording built from the table's name.** A `workflows.name` column gets "Quarterly Workflow"; a notes column gets "Waiting for approval from the finance team."
+- **Never lorem ipsum, and never novel excerpts.**
+
+
 ## Scenarios
 
 Free text (requires AI):
@@ -433,6 +442,7 @@ Other settings:
 | `connection` | Connection to seed (default connection if null) |
 | `model_paths` | Directories scanned for models (default `app/`); add module paths here |
 | `excluded_tables` / `excluded_columns` | Never generated; wildcards allowed (framework tables are excluded by default) |
+| `protected_tables` | Tables with real data: never generated into or deleted, still used as parents. See [Protecting real data](#protecting-real-data). |
 | `morph_targets` | What a polymorphic relation can point to, when no model declares it: `'bank_accounts.account' => [User::class, Company::class]` |
 | `size`, `strategy`, `locale`, `currency` | Defaults for the CLI options |
 | `chunk_size`, `existing_rows_limit`, `max_rows` | Performance and safety limits |
@@ -561,6 +571,23 @@ Return `null` for anything you don't want to change, and RealSeed falls back to 
 ### AI providers
 
 Implement `Ayangzy\RealSeed\AI\AIProviderInterface` (instructions + prompt + JSON Schema in, decoded object out) and set `ai.driver` to your class to use any model without `laravel/ai`.
+
+## Protecting real data
+
+Some tables hold real data your app depends on: roles and permissions, plans, your product catalogue, the admin account. List them in `protected_tables`:
+
+```php
+// config/realseed.php
+'protected_tables' => ['roles', 'permissions', 'plans', 'products'],
+```
+
+RealSeed then:
+
+- **never adds rows to them,** and refuses `--only` on them
+- **never deletes from them,** not even with `--fresh`. If `--fresh` would have to (because a protected table points at a table being regenerated), it stops and tells you instead.
+- **still links new data to their existing rows,** so generated users get your real roles and generated orders use your real products
+
+Normal runs never change or delete existing rows in any table; they only add new ones. Protection matters for `--fresh`, and for keeping fake rows out of tables that should only hold real data.
 
 ## Staging and destructive operations
 

@@ -10,6 +10,7 @@ use Ayangzy\RealSeed\Planning\FieldPlan;
 use Ayangzy\RealSeed\Schema\ColumnSchema;
 use Ayangzy\RealSeed\Semantics\ReferenceData;
 use Ayangzy\RealSeed\Semantics\Semantic;
+use Ayangzy\RealSeed\Semantics\Vocabulary;
 use Carbon\CarbonImmutable;
 use Closure;
 use Faker\Generator as Faker;
@@ -113,13 +114,13 @@ final class ValueGenerator
             Semantic::COMPANY => $faker->company(),
             Semantic::JOB_TITLE => $faker->jobTitle(),
 
-            Semantic::TITLE => Str::ucfirst($faker->bs()),
-            Semantic::NAME => Str::title($faker->catchPhrase()),
-            Semantic::SENTENCE => $this->text($faker, min(160, $column->maxLength() ?? 160)),
-            Semantic::PARAGRAPH => $this->text($faker, $random->int(160, 600)),
+            Semantic::TITLE => $this->fromVocabulary($plan, $row, 'title', $random) ?? Vocabulary::title($random),
+            Semantic::NAME => $this->fromVocabulary($plan, $row, 'name', $random) ?? Vocabulary::name((string) $plan->option('entity', $row->table), $random),
+            Semantic::SENTENCE => $this->fromVocabulary($plan, $row, 'text', $random) ?? Vocabulary::sentence($random),
+            Semantic::PARAGRAPH => $this->paragraph($plan, $row, $random),
             Semantic::SLUG => Str::slug($this->label($row) ?? $faker->words(3, true)),
             Semantic::CODE => $this->code($row, $column),
-            Semantic::WORD => $faker->word(),
+            Semantic::WORD => Vocabulary::word($random),
 
             Semantic::MONEY => $this->money($plan, $column, $random),
             Semantic::QUANTITY => $this->bounded($plan, $column, 1, 20, $random, skew: 2.0),
@@ -150,7 +151,7 @@ final class ValueGenerator
             Semantic::TIMEZONE => $faker->timezone(),
             Semantic::NULL => $column->nullable ? null : '',
 
-            default => $faker->word(),
+            default => Vocabulary::word($random),
         };
     }
 
@@ -380,12 +381,39 @@ final class ValueGenerator
         return $max === null ? $value : min($value, $max);
     }
 
-    private function text(Faker $faker, int $length): string
+    /**
+     * A realistic value for the table (or the column's own entity, e.g. product_name), or
+     * null when there is no vocabulary for it. Unique columns use the composers instead,
+     * which have far more combinations than a fixed list.
+     */
+    private function fromVocabulary(FieldPlan $plan, RowState $row, string $kind, SeededRandom $random): ?string
     {
-        $length = max(10, $length);
+        if ($plan->option('unique')) {
+            return null;
+        }
 
-        // realText() yields readable English; fall back to sentences where unavailable.
-        return $this->tryFaker(['realText' => [$length]], fn () => Str::limit($faker->paragraph(), $length, ''));
+        $entity = (string) $plan->option('entity', $row->table);
+
+        if ($entity === 'bank' && $kind === 'name') {
+            return $random->pick(Vocabulary::banks($this->locale->countryCode()));
+        }
+
+        $values = Vocabulary::samples($entity, $kind);
+
+        return $values === null ? null : $random->pick($values);
+    }
+
+    private function paragraph(FieldPlan $plan, RowState $row, SeededRandom $random): string
+    {
+        $values = Vocabulary::samples((string) $plan->option('entity', $row->table), 'text');
+
+        if ($values === null) {
+            return Vocabulary::paragraph($random);
+        }
+
+        $sentences = array_map(fn () => $random->pick($values), range(1, $random->int(1, 3)));
+
+        return implode(' ', array_unique($sentences));
     }
 
     private function countryName(): string

@@ -203,6 +203,7 @@ final class FieldInferrer
             $is('full_name', 'display_name', 'contact_name') || $matches('/^('.implode('|', self::PERSON_ENTITIES).')_name$/') => Semantic::FULL_NAME,
             $is('company', 'company_name', 'business_name', 'organization_name', 'organisation_name', 'employer') => Semantic::COMPANY,
             $name === 'name' => $this->entityNameSemantic($table),
+            $textual && $matches('/^[a-z0-9]+_name$/') => Semantic::NAME,
 
             $name === 'email' || str_ends_with($name, '_email') => Semantic::EMAIL,
             $is('username', 'user_name', 'handle', 'login', 'nickname') => Semantic::USERNAME,
@@ -250,7 +251,20 @@ final class FieldInferrer
             return null;
         }
 
+        $options = [];
+
+        if (in_array($semantic, [Semantic::TITLE, Semantic::NAME, Semantic::SENTENCE, Semantic::PARAGRAPH], true)) {
+            if (preg_match('/^([a-z0-9]+)_name$/', $name, $m)) {
+                $options['entity'] = $m[1]; // product_name -> product vocabulary, bank_name -> banks
+            }
+
+            if ($table->isUnique($column->name)) {
+                $options['unique'] = true;
+            }
+        }
+
         return match ($semantic) {
+            Semantic::TITLE, Semantic::NAME, Semantic::SENTENCE, Semantic::PARAGRAPH => new FieldPlan($semantic, $options),
             Semantic::BOOLEAN => new FieldPlan($semantic, ['true_rate' => $this->trueRate($name)]),
             Semantic::PAST, Semantic::FUTURE => new FieldPlan($semantic, $this->workflowCondition($table, $column)),
             default => new FieldPlan($semantic),
