@@ -66,3 +66,21 @@ it('explains a real rate limit with the prompt size', function () {
 
     (new LaravelAiProvider)->generate('instructions', str_repeat('x', 4000), PlanPrompt::schema());
 })->throws(AIProviderException::class, 'The prompt was about 1,003 tokens; wait a minute and retry');
+
+it('treats a Gemini free-tier limit as a rate limit, not missing credit', function () {
+    StructuredAnonymousAgent::fake(fn () => throw providerError(429, ['error' => [
+        'code' => 429, 'message' => 'Resource has been exhausted (e.g. check quota).', 'status' => 'RESOURCE_EXHAUSTED',
+    ]]));
+
+    try {
+        (new LaravelAiProvider('gemini'))->generate('instructions', 'prompt', PlanPrompt::schema());
+    } catch (AIProviderException $e) {
+        expect($e->getMessage())->toContain('Provider says: Resource has been exhausted (e.g. check quota). (RESOURCE_EXHAUSTED)')
+            ->toContain('wait a minute and retry')
+            ->not->toContain('no API credit');
+
+        return;
+    }
+
+    $this->fail('Expected an AIProviderException.');
+});

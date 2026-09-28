@@ -69,8 +69,10 @@ final class LaravelAiProvider implements AIProviderInterface
         for ($cause = $e; $cause !== null; $cause = $cause->getPrevious()) {
             if ($cause instanceof RequestException && $cause->response !== null) {
                 $error = $cause->response->json('error');
+                // OpenAI: message + code; Anthropic: message + type; Google: message + status.
+                $label = $error['status'] ?? $error['code'] ?? $error['type'] ?? null;
                 $details = is_array($error)
-                    ? trim(($error['message'] ?? '').(isset($error['code']) || isset($error['type']) ? ' ('.($error['code'] ?? $error['type']).')' : ''))
+                    ? trim(($error['message'] ?? '').($label !== null ? " ({$label})" : ''))
                     : (is_string($error) ? $error : null);
                 break;
             }
@@ -80,10 +82,13 @@ final class LaravelAiProvider implements AIProviderInterface
             $message .= ' Provider says: '.$details;
         }
 
+        $lower = strtolower((string) $details);
+
         $hint = match (true) {
-            str_contains((string) $details, 'insufficient_quota') || str_contains(strtolower((string) $details), 'quota') || str_contains(strtolower((string) $details), 'credit')
+            // "quota" alone is ambiguous: Google reports free-tier rate limits as RESOURCE_EXHAUSTED ... quota.
+            str_contains($lower, 'insufficient_quota') || str_contains($lower, 'billing') || str_contains($lower, 'credit balance')
                 => ' The account has no API credit: add billing with your AI provider (API usage is billed separately from chat subscriptions).',
-            str_contains($e->getMessage(), 'rate limited') || str_contains((string) $details, 'rate_limit')
+            str_contains($e->getMessage(), 'rate limited') || str_contains($lower, 'rate_limit') || str_contains($lower, 'resource_exhausted')
                 => sprintf(' The prompt was about %s tokens; wait a minute and retry, or choose a model with higher limits (REALSEED_AI_MODEL).', number_format((int) (mb_strlen($sent) / 4))),
             default => '',
         };
