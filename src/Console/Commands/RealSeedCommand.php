@@ -43,7 +43,7 @@ use Throwable;
 
 class RealSeedCommand extends Command
 {
-    protected $signature = 'realseed
+    protected $signature = 'real:seed
         {--dry-run : Show the generation plan without changing the database}
         {--seed= : Seed for reproducible output}
         {--size= : Dataset size: small, medium, or large}
@@ -61,7 +61,7 @@ class RealSeedCommand extends Command
     protected $description = 'Generate realistic synthetic data for local, dev, development, or staging environments';
 
     /** @var list<string> */
-    protected $aliases = ['ai:seed'];
+    protected $aliases = ['realseed', 'ai:seed'];
 
     /** @var list<string> */
     private array $planNotes = [];
@@ -685,7 +685,7 @@ class RealSeedCommand extends Command
 
         $this->newLine();
         $this->line(sprintf('Generation time: %.2fs', $stats->seconds));
-        $this->line("Reproduce with: php artisan realseed --seed={$plan->seed}", verbosity: 'v');
+        $this->line("Reproduce with: php artisan real:seed --seed={$plan->seed}", verbosity: 'v');
     }
 
     private function encrypter(): mixed

@@ -43,7 +43,7 @@ function useAi(array|Throwable $response): FakeAIProvider
 
 function runSeeder(array $options = []): int
 {
-    return Artisan::call('realseed', ['--seed' => 7, '--size' => 'small', '--no-interaction' => true, ...$options]);
+    return Artisan::call('real:seed', ['--seed' => 7, '--size' => 'small', '--no-interaction' => true, ...$options]);
 }
 
 beforeEach(function () {

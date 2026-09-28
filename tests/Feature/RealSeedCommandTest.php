@@ -18,7 +18,7 @@ it('rejects unsupported environments without touching the database', function (s
     $this->setEnvironment($environment);
 
     $queries = countQueries(function () use ($environment) {
-        $this->artisan('realseed')
+        $this->artisan('real:seed')
             ->expectsOutputToContain("Environment: {$environment}")
             ->expectsOutputToContain('✗ RealSeed cannot run in this environment.')
             ->expectsOutputToContain('No database changes were made.')
@@ -32,7 +32,7 @@ it('rejects unsupported environments without touching the database', function (s
 it('proceeds in supported environments and shows the target', function () {
     $this->setEnvironment('local');
 
-    $this->artisan('realseed')
+    $this->artisan('real:seed')
         ->expectsOutputToContain('Environment: local')
         ->expectsOutputToContain('Connection: testbench ('.config('database.connections.testbench.driver').')')
         ->expectsOutputToContain('✓ Environment supported')
@@ -44,7 +44,7 @@ it('blocks a supported environment pointed at a production-looking database', fu
     $this->setEnvironment('staging');
     config(['database.connections.testbench.database' => 'myapp_production']);
 
-    $this->artisan('realseed')
+    $this->artisan('real:seed')
         ->expectsOutputToContain('looks like a production database')
         ->expectsOutputToContain('No database changes were made.')
         ->assertExitCode(1);
@@ -56,12 +56,12 @@ it('requires the database name to be typed when local points at a remote host', 
         'driver' => 'mysql', 'host' => 'db.example.com', 'database' => 'myapp',
     ]]);
 
-    $this->artisan('realseed')
+    $this->artisan('real:seed')
         ->expectsQuestion('Type the database name [myapp] to continue', 'wrong')
         ->expectsOutputToContain('did not match')
         ->assertExitCode(1);
 
-    $this->artisan('realseed')
+    $this->artisan('real:seed')
         ->expectsQuestion('Type the database name [myapp] to continue', 'myapp')
         ->expectsOutputToContain('✓ Environment supported')
         ->expectsOutputToContain('Could not read the database schema')
@@ -74,7 +74,7 @@ it('refuses remote-host confirmation in non-interactive mode', function () {
         'driver' => 'mysql', 'host' => 'db.example.com', 'database' => 'myapp',
     ]]);
 
-    $this->artisan('realseed', ['--no-interaction' => true])
+    $this->artisan('real:seed', ['--no-interaction' => true])
         ->expectsOutputToContain('non-interactive')
         ->assertExitCode(1);
 });
@@ -89,7 +89,7 @@ it('summarises the analysed application', function () {
     \Ayangzy\RealSeed\Tests\Fixtures\SaasSchema::create();
     $this->setEnvironment('local');
 
-    $this->artisan('realseed', ['--dry-run' => true])
+    $this->artisan('real:seed', ['--dry-run' => true])
         ->expectsOutputToContain('6 models detected')
         ->expectsOutputToContain('8 tables detected')
         ->expectsOutputToContain('2 enums detected')
@@ -102,16 +102,16 @@ it('stops when migrations are pending', function () {
     $this->setEnvironment('local');
     $this->app['migrator']->path(__DIR__.'/../Fixtures/migrations');
 
-    $this->artisan('realseed')
+    $this->artisan('real:seed')
         ->expectsOutputToContain('1 of 1 migrations have not been run')
         ->expectsOutputToContain('No database changes were made.')
         ->assertExitCode(1);
 });
 
-it('keeps ai:seed as an alias with the same safety guarantees', function () {
+it('keeps realseed and ai:seed as aliases with the same safety guarantees', function (string $alias) {
     $this->setEnvironment('production');
 
-    $this->artisan('ai:seed')
+    $this->artisan($alias)
         ->expectsOutputToContain('✗ RealSeed cannot run in this environment.')
         ->assertExitCode(1);
-});
+})->with(['realseed', 'ai:seed']);

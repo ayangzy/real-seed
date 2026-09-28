@@ -32,7 +32,7 @@ beforeEach(function () {
 
 function seedRun(array $options = []): int
 {
-    return Artisan::call('realseed', ['--seed' => 3, '--size' => 'small', '--no-interaction' => true, ...$options]);
+    return Artisan::call('real:seed', ['--seed' => 3, '--size' => 'small', '--no-interaction' => true, ...$options]);
 }
 
 it('generates coherent Nigerian data with --locale=ng', function () {

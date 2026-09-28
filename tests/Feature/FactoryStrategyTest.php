@@ -16,7 +16,7 @@ beforeEach(function () {
 
 function seedWith(string $strategy, array $options = []): int
 {
-    return Artisan::call('realseed', ['--seed' => 5, '--size' => 'small', '--no-interaction' => true, '--strategy' => $strategy, ...$options]);
+    return Artisan::call('real:seed', ['--seed' => 5, '--size' => 'small', '--no-interaction' => true, '--strategy' => $strategy, ...$options]);
 }
 
 it('discovers factories and their states', function () {

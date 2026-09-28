@@ -14,7 +14,7 @@ beforeEach(function () {
 
 function seedSaas(array $options = []): int
 {
-    return Artisan::call('realseed', ['--seed' => 42, '--size' => 'small', '--no-interaction' => true, ...$options]);
+    return Artisan::call('real:seed', ['--seed' => 42, '--size' => 'small', '--no-interaction' => true, ...$options]);
 }
 
 function scalar(string $sql): int
@@ -110,7 +110,7 @@ it('is reproducible for the same seed and differs for another', function () {
 });
 
 it('makes no changes on a dry run', function () {
-    Artisan::call('realseed', ['--dry-run' => true, '--size' => 'small']);
+    Artisan::call('real:seed', ['--dry-run' => true, '--size' => 'small']);
 
     expect(Artisan::output())->toContain('Generation Plan')->toContain('No database changes were made.')
         ->and(DB::table('users')->count())->toBe(0);
@@ -172,7 +172,7 @@ it('requires typed confirmation for --fresh and replaces existing rows', functio
     $database = config('database.connections.testbench.database');
     $question = "This will permanently delete the rows listed above. Type the database name [{$database}] to continue";
 
-    $this->artisan('realseed', ['--seed' => 1, '--size' => 'small', '--fresh' => true])
+    $this->artisan('real:seed', ['--seed' => 1, '--size' => 'small', '--fresh' => true])
         ->expectsOutputToContain('existing data in these tables will be removed')
         ->expectsQuestion($question, 'wrong')
         ->expectsOutputToContain('No database changes were made.')
@@ -180,7 +180,7 @@ it('requires typed confirmation for --fresh and replaces existing rows', functio
 
     expect(DB::table('organizations')->count())->toBe(3);
 
-    $this->artisan('realseed', ['--seed' => 1, '--size' => 'small', '--fresh' => true])
+    $this->artisan('real:seed', ['--seed' => 1, '--size' => 'small', '--fresh' => true])
         ->expectsQuestion($question, $database)
         ->assertExitCode(0);
 

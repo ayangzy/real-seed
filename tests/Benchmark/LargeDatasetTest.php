@@ -16,7 +16,7 @@ it('generates 100k rows within memory and time budgets', function () {
     $this->setEnvironment('local');
 
     $started = microtime(true);
-    $exit = Artisan::call('realseed', ['--seed' => 1, '--count' => 100000, '--size' => 'large', '--no-interaction' => true]);
+    $exit = Artisan::call('real:seed', ['--seed' => 1, '--count' => 100000, '--size' => 'large', '--no-interaction' => true]);
     $seconds = microtime(true) - $started;
 
     $total = collect(['organizations', 'users', 'projects', 'project_user', 'tasks', 'comments', 'tags', 'taggables'])

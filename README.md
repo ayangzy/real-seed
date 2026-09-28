@@ -3,7 +3,7 @@
 **Realistic, relational, time-coherent synthetic data for your Laravel app, generated from your app's actual structure.**
 
 ```bash
-php artisan realseed        # also available as: php artisan ai:seed
+php artisan real:seed        # aliases: php artisan realseed, php artisan ai:seed
 ```
 
 ## The problem
@@ -133,8 +133,8 @@ composer require laravel/ai
 
 ```bash
 php artisan migrate
-php artisan realseed --dry-run      # see what would be generated
-php artisan realseed                # generate it
+php artisan real:seed --dry-run      # see what would be generated
+php artisan real:seed                # generate it
 ```
 
 ```text
@@ -242,7 +242,7 @@ The environment name only protects you if it's accurate, so RealSeed also checks
 | `--show-prompt` | Print exactly what would be sent to the AI. |
 | `--fresh` | Delete existing rows in affected tables first (typed confirmation). |
 
-Options combine where they make sense, e.g. `php artisan realseed --only=appointments --locale=ng --seed=42 --dry-run`.
+Options combine where they make sense, e.g. `php artisan real:seed --only=appointments --locale=ng --seed=42 --dry-run`.
 
 ## Dataset size
 
@@ -259,13 +259,13 @@ Sizes are derived from your relationship graph, not applied per table. Root tabl
 ## Selective seeding
 
 ```bash
-php artisan realseed --only=appointments
+php artisan real:seed --only=appointments
 ```
 
 If appointments need patients and doctors, RealSeed reuses the rows already in those tables. Only when a required parent table is empty does it generate the minimum needed (the `small` preset). It never generates the whole database.
 
 ```bash
-php artisan realseed --except=users
+php artisan real:seed --except=users
 ```
 
 This skips `users`, but fails clearly if other tables require users and the table is empty.
@@ -273,7 +273,7 @@ This skips `users`, but fails clearly if other tables require users and the tabl
 ## Reproducibility
 
 ```bash
-php artisan realseed --seed=12345
+php artisan real:seed --seed=12345
 ```
 
 The same schema, plan, locale and seed produce identical data:
@@ -310,7 +310,7 @@ With `laravel/ai` installed, RealSeed asks your configured model (Anthropic, Ope
 **What is sent:** only structure. That means table and column names, types, nullability, uniqueness, foreign keys, enum values, cast types, column comments, model class names, factory state names and the baseline plan. **Row data is never read for the prompt**, so a staging database restored from production can't leak through RealSeed. To see the exact prompt:
 
 ```bash
-php artisan realseed --dry-run --show-prompt
+php artisan real:seed --dry-run --show-prompt
 ```
 
 To keep a column out of the prompt entirely, add it to `excluded_columns` (it must be nullable or have a default).
@@ -332,7 +332,7 @@ If the AI call fails, RealSeed says so and continues with heuristics. The except
 ## No-AI mode
 
 ```bash
-php artisan realseed --no-ai
+php artisan real:seed --no-ai
 ```
 
 This mode needs no AI package or network access. It uses schema analysis, relationships, field inference (`first_name`, `email`, `price`, `*_at`, `status`, …), enum-aware distributions, workflow linking (`completed_at` ↔ `status`), your factories, and your configuration. It's also what runs when no AI provider is available.
@@ -342,21 +342,21 @@ This mode needs no AI package or network access. It uses schema analysis, relati
 Free text (requires AI):
 
 ```bash
-php artisan realseed --scenario="busy hospital with six months of appointment history"
-php artisan realseed --scenario="property marketplace with active listings"
+php artisan real:seed --scenario="busy hospital with six months of appointment history"
+php artisan real:seed --scenario="property marketplace with active listings"
 ```
 
 Named scenarios are reusable code that works without AI. See [ScenarioProvider](#scenario-providers).
 
 ```bash
-php artisan realseed --scenario=demo
+php artisan real:seed --scenario=demo
 ```
 
 ## Existing factories
 
 ```bash
-php artisan realseed --strategy=factory   # factory values for every column a factory defines
-php artisan realseed --strategy=hybrid    # factories for basic values; RealSeed for distributions and timelines
+php artisan real:seed --strategy=factory   # factory values for every column a factory defines
+php artisan real:seed --strategy=hybrid    # factories for basic values; RealSeed for distributions and timelines
 ```
 
 In both modes RealSeed owns keys, relationships, counts and ordering. In `hybrid` mode it also keeps enum distributions, timestamps and anything refined by AI or config. Tables without a factory are generated normally.
@@ -376,7 +376,7 @@ Factory states are discovered, and the AI or your config can mix them:
 ## Locales
 
 ```bash
-php artisan realseed --locale=ng
+php artisan real:seed --locale=ng
 ```
 
 | Code | Faker locale | Currency |
@@ -496,7 +496,7 @@ class DemoScenario implements ScenarioProvider
     }
 }
 
-// 'scenarios' => ['demo' => DemoScenario::class]   →   php artisan realseed --scenario=demo
+// 'scenarios' => ['demo' => DemoScenario::class]   →   php artisan real:seed --scenario=demo
 ```
 
 ### Application analyzers
@@ -524,7 +524,7 @@ class KenyaLocale extends FakerLocale
     }
 }
 
-// 'locales' => ['ke' => KenyaLocale::class]   →   php artisan realseed --locale=ke
+// 'locales' => ['ke' => KenyaLocale::class]   →   php artisan real:seed --locale=ke
 ```
 
 ### AI providers
