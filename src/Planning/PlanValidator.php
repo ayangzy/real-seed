@@ -372,13 +372,16 @@ final class PlanValidator
         $graph = $this->analysis->graph;
         $total = fn () => array_sum(array_map(fn (TablePlan $plan) => $plan->count, $tables));
 
-        if ($options->count !== null && $total() > 0) {
-            $factor = $options->count / $total();
+        // --count is the number of rows for the tables the developer selected; parents added
+        // only because those tables require them don't count towards it.
+        $selected = array_filter($tables, fn (TablePlan $plan, string $name) => $plan->count > 0 && $options->isTarget($name), ARRAY_FILTER_USE_BOTH);
+        $selectedTotal = array_sum(array_map(fn (TablePlan $plan) => $plan->count, $selected));
 
-            foreach ($tables as $name => $plan) {
-                if ($plan->count > 0) {
-                    $tables[$name] = $plan->withCount(max(1, (int) round($plan->count * $factor)));
-                }
+        if ($options->count !== null && $selectedTotal > 0) {
+            $factor = $options->count / $selectedTotal;
+
+            foreach ($selected as $name => $plan) {
+                $tables[$name] = $plan->withCount(max(1, (int) round($plan->count * $factor)));
             }
         }
 
@@ -392,6 +395,8 @@ final class PlanValidator
                 }
             }
         }
+
+        $tables = $this->minimiseAddedParents($tables, $options);
 
         // Catalog tables (currencies, countries) can't outgrow the real entries.
         foreach ($tables as $name => $plan) {
@@ -413,6 +418,46 @@ final class PlanValidator
                 if ($tables[$name]->count > $available) {
                     $tables[$name] = $tables[$name]->withCount($available);
                 }
+            }
+        }
+
+        return $tables;
+    }
+
+    /**
+     * Parents that are generated only because a selected table requires them get no more
+     * rows than their children need: five tasks need at most five projects, not 27.
+     *
+     * @param  array<string, TablePlan>  $tables
+     * @return array<string, TablePlan>
+     */
+    private function minimiseAddedParents(array $tables, PlanOptions $options): array
+    {
+        $graph = $this->analysis->graph;
+        $order = (new DependencyResolver)->resolve($graph);
+
+        // Children before parents, so a parent sees its children's final counts.
+        foreach (array_reverse($order->tables) as $name) {
+            if ($tables[$name]->count === 0 || $options->isTarget($name)) {
+                continue;
+            }
+
+            $needed = 0;
+
+            foreach ($graph->childEdges($name) as $edge) {
+                if (! $edge->nullable && ! $edge->isSelfReferencing() && ! $order->isDeferred($edge)) {
+                    $needed = max($needed, $tables[$edge->child]->count);
+                }
+            }
+
+            foreach ($graph->morphSlots() as $slot) {
+                if (! $slot->nullable && in_array($name, $slot->targets, true)) {
+                    $needed = max($needed, $tables[$slot->table]->count);
+                }
+            }
+
+            if ($needed > 0 && $needed < $tables[$name]->count) {
+                $tables[$name] = $tables[$name]->withCount($needed);
             }
         }
 

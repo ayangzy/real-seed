@@ -212,3 +212,26 @@ it('rolls back everything when generation fails', function () {
         ->and(DB::table('users')->count())->toBe(0)
         ->and(DB::table('tasks')->count())->toBe(0);
 });
+
+it('gives exactly --count rows to the selected table, whatever the AI suggests', function (?int $aiCount) {
+    app()->instance(\Ayangzy\RealSeed\AI\AIProviderInterface::class, new \Ayangzy\RealSeed\Tests\Fixtures\FakeAIProvider([
+        'domain' => 'x', 'timeline_months' => null,
+        'tables' => $aiCount === null ? [] : [['table' => 'tasks', 'count' => $aiCount, 'states' => null, 'fields' => []]],
+    ]));
+
+    seedSaas(['--only' => 'tasks', '--count' => 5]);
+
+    expect(DB::table('tasks')->count())->toBe(5)
+        // Parents added only for the tasks: never more than the tasks need.
+        ->and(DB::table('projects')->count())->toBeLessThanOrEqual(5)
+        ->and(DB::table('users')->count())->toBeLessThanOrEqual(5)
+        ->and(DB::table('comments')->count())->toBe(0);
+})->with([null, 1, 40, 900]);
+
+it('splits --count across several selected tables', function () {
+    seedSaas(['--only' => 'tasks,comments', '--count' => 60]);
+
+    $selected = DB::table('tasks')->count() + DB::table('comments')->count();
+
+    expect($selected)->toBeGreaterThanOrEqual(58)->toBeLessThanOrEqual(62);
+});

@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.1
+
+- Fix: `--only=invoices --count=5` could generate fewer invoices (e.g. 1), because `--count` was spread over the parents added for them. `--count` now applies to the selected tables only.
+- Parents generated only because selected tables require them get no more rows than needed (5 tasks → at most 5 projects, not 27).
+
 ## v0.3.0 (breaking)
 
 - RealSeed always plans with AI. `--no-ai` and the `ai.enabled` setting are removed. When no AI provider can be used, or the AI request fails, RealSeed stops before writing anything and explains why.

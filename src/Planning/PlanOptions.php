@@ -27,6 +27,19 @@ final readonly class PlanOptions
     ) {
     }
 
+    /**
+     * Whether the developer asked for this table (as opposed to a parent added because
+     * a selected table requires it). --count applies to these tables only.
+     */
+    public function isTarget(string $table): bool
+    {
+        if ($this->isProtected($table)) {
+            return false;
+        }
+
+        return $this->only !== null ? in_array($table, $this->only, true) : ! in_array($table, $this->except, true);
+    }
+
     public function isProtected(string $table): bool
     {
         return in_array($table, $this->protected, true);
