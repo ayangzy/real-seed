@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 
 /**
  * Deterministic column interpretation from names, types, casts, and the graph.
- * This is the no-AI baseline; the AI planner refines it rather than replacing it.
+ * This is the baseline; the AI planner refines it rather than replacing it.
  */
 final class FieldInferrer
 {

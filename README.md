@@ -38,7 +38,7 @@ Order #15    status: delivered            delivered_at: 2026-04-18 14:02
 User #3      41 comments                  User #4: 6 comments       User #5: 0 comments ...
 ```
 
-Relationships, timelines, statuses, activity patterns and readable text for common tables (tasks, products, posts, comments, …) all work out of the box, with no AI keys needed. [AI planning](#ai-planning) adds text written for *your* domain, and you can supply your own samples.
+RealSeed's engine handles relationships, timelines, statuses and activity patterns, and [AI planning](#ai-planning) writes the quantities, proportions and text for *your* domain.
 
 ## What RealSeed does
 
@@ -69,7 +69,6 @@ It is **not** a Faker wrapper. Faker generates values; RealSeed generates *an ap
 - [Selective seeding](#selective-seeding)
 - [Reproducibility](#reproducibility)
 - [AI planning](#ai-planning)
-- [No-AI mode](#no-ai-mode)
 - [Scenarios](#scenarios)
 - [Existing factories](#existing-factories)
 - [Locales](#locales)
@@ -96,7 +95,7 @@ Analysis                live schema (tables, columns, keys, indexes, enum/check 
 Relationship graph      foreign keys + model relations, pivots, polymorphic targets,
                         dependency order, cycle detection
       ↓
-Plan                    heuristics → your analyzers → AI suggestions → scenario → config overrides
+Plan                    baseline → your analyzers → AI plan → scenario → config overrides
                         (every layer validated against the schema)
       ↓
 Deterministic engine    seeded generation of every row: scope-consistent relationships,
@@ -111,9 +110,9 @@ AI is used for what it is good at: understanding what your application is, choos
 ## Requirements
 
 - PHP 8.3+
-- Laravel 11, 12 or 13
+- Laravel 12 or 13
 - SQLite, MySQL/MariaDB or PostgreSQL (SQL Server is best-effort)
-- Optional: [`laravel/ai`](https://github.com/laravel/ai) for AI planning (Laravel 12+). On Laravel 11, RealSeed runs in no-AI mode, or with your own [AI provider](#ai-providers).
+- An AI provider key: OpenAI, Gemini, Anthropic and others through the [Laravel AI SDK](https://github.com/laravel/ai), which RealSeed installs for you. [Ollama](https://ollama.com) works locally with no key.
 
 ## Installation
 
@@ -130,10 +129,10 @@ Publish the config if you want to change the defaults:
 php artisan vendor:publish --tag=realseed-config
 ```
 
-To enable AI planning, install and configure the Laravel AI SDK (see its docs for API keys):
+Then add your AI provider's key to `.env` (see [Setting it up](#setting-it-up)):
 
-```bash
-composer require laravel/ai
+```env
+OPENAI_API_KEY=sk-...
 ```
 
 ## Quick start
@@ -244,7 +243,6 @@ The environment name only protects you if it's accurate, so RealSeed also checks
 | `--scenario="..."` | Describe the data you want (needs AI), or use a named scenario. |
 | `--locale=ng` | Locale for names, addresses, phones and currency. |
 | `--strategy=ai\|factory\|hybrid` | Whether to use your model factories. |
-| `--no-ai` | Plan with built-in heuristics only. |
 | `--replan` | Ask the AI for a new plan instead of reusing the saved one. |
 | `--show-prompt` | Print exactly what would be sent to the AI. |
 | `--fresh` | Delete existing rows in affected tables first (typed confirmation). |
@@ -290,11 +288,11 @@ The same schema, plan, locale and seed produce identical data:
 
 Two caveats:
 - **Password hashes** differ between runs, because bcrypt salts are random by design. The password itself (`password`) is always the same.
-- **Dates without AI** are anchored to the current hour, so no-AI runs on different days shift dates. Saved AI plans pin the timeline, so AI runs reproduce exact dates on any day.
+- **Dates** come from the saved AI plan, which pins the timeline, so the same plan reproduces exact dates on any day. `--replan` starts a new timeline.
 
 ## AI planning
 
-With `laravel/ai` installed, RealSeed asks your configured model (Anthropic, OpenAI, Gemini, Ollama and others) to plan the data. The AI returns:
+RealSeed always plans with AI, using your configured model (OpenAI, Gemini, Anthropic, Ollama and others). The AI returns:
 
 - a one-line understanding of what the application does
 - realistic row counts and history length
@@ -305,9 +303,7 @@ With `laravel/ai` installed, RealSeed asks your configured model (Anthropic, Ope
 
 ### Setting it up
 
-```bash
-composer require laravel/ai        # Laravel 12+
-```
+The Laravel AI SDK comes with RealSeed; you only add a key:
 
 ```env
 # .env
@@ -356,23 +352,7 @@ Run with `-v` to see what was ignored.
 
 **Saved plans:** AI suggestions are saved as JSON in `storage/realseed/plans` (or `plans_path`) and reused while the schema and options don't change. Re-runs are therefore free, fast and reproducible. Commit the folder to share datasets with your team, and use `--replan` to get a fresh plan. Saved files are re-validated on every use.
 
-If the AI call fails, RealSeed says so and continues with heuristics. The exception is a free-text `--scenario`, which can't be honoured without the AI, so the run stops.
-
-## No-AI mode
-
-```bash
-php artisan real:seed --no-ai
-```
-
-This mode needs no AI package or network access. It uses schema analysis, relationships, field inference (`first_name`, `email`, `price`, `*_at`, `status`, …), enum-aware distributions, workflow linking (`completed_at` ↔ `status`), your factories, and your configuration. It's also what runs when no AI provider is available.
-
-Text stays readable without AI:
-
-- **Common tables get realistic built-in values.** Tasks and tickets, projects, products, posts, comments and reviews, events and appointments, courses, categories and tags, teams and departments, properties, campaigns, documents, services, plans, jobs, branches, announcements, FAQs and invoice or order lines. For example, `tasks.title` → "Reconcile March bank statement", and `products.name` → "Stainless Steel Water Bottle 750ml".
-- **`*_name` columns use their own entity.** `product_name` gets product names, and `bank_name` gets real banks for the locale (Access Bank, GTBank, … for `ng`).
-- **Anything else gets plain, neutral wording built from the table's name.** A `workflows.name` column gets "Quarterly Workflow"; a notes column gets "Waiting for approval from the finance team."
-- **Never lorem ipsum, and never novel excerpts.**
-
+If the AI can't be reached or the request fails, RealSeed stops before writing anything and shows the provider's own explanation (missing credit, rate limit, timeout, …) with a hint.
 
 ## Scenarios
 
@@ -383,7 +363,7 @@ php artisan real:seed --scenario="busy hospital with six months of appointment h
 php artisan real:seed --scenario="property marketplace with active listings"
 ```
 
-Named scenarios are reusable code that works without AI. See [ScenarioProvider](#scenario-providers).
+Named scenarios are reusable code; their description is given to the AI. See [ScenarioProvider](#scenario-providers).
 
 ```bash
 php artisan real:seed --scenario=demo
@@ -429,7 +409,7 @@ All data is synthetic. Emails use reserved domains (`example.com`, `example.org`
 
 ## Configuration and overrides
 
-Your configuration beats heuristics and AI, but never safety:
+Your configuration beats AI suggestions, but never safety:
 
 ```php
 'overrides' => [
@@ -662,8 +642,8 @@ The schema is read through Laravel's schema builder, so RealSeed works with ever
 | `N of M migrations have not been run` | Run `php artisan migrate`. RealSeed reads the migrated schema. |
 | `Cannot skip [x]: other tables require it` | Seed `x` first, or don't `--except` it. |
 | `Tables [a, b] reference each other through required foreign keys` | Make one of the columns nullable, or exclude a table. |
-| `--scenario needs AI planning` | Install and configure `laravel/ai`, or use a named scenario. |
-| `AI planning failed (...)` | Check your `laravel/ai` credentials and model. RealSeed continued with heuristics. |
+| `no AI provider is available` | Add your provider's key to `.env` (e.g. `OPENAI_API_KEY`), then `php artisan config:clear`. |
+| `AI planning failed: ...` | Read the provider's explanation in the message: add API credit, wait out a rate limit, or raise `REALSEED_AI_TIMEOUT`. Nothing was written. |
 | `... was not used for [table]: its definition writes to the database` | That factory creates records while it's being defined. Fix it, or use `--strategy=ai`. |
 | `RealSeed can't tell what [x] can point to` | Add a `morphMany`/`morphOne` relation named `x` to each owning model, or set `'morph_targets' => ['table.x' => [Model::class]]` in the config. |
 | `Skipping [a]: it needs rows in [b]` | `b` is skipped (see the note above it) and empty; fix `b` or seed it first. |

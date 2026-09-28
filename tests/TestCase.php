@@ -18,8 +18,11 @@ abstract class TestCase extends Orchestra
         $app['config']->set('database.connections.testbench', self::testConnection());
         $app['config']->set('realseed.model_paths', [__DIR__.'/Fixtures/Models']);
 
-        // Tests never reach a real AI provider; AI tests bind a fake explicitly.
-        $app['config']->set('realseed.ai.enabled', false);
+        // Tests never reach a real AI provider. By default the fake suggests nothing,
+        // so the baseline plan is used as is; AI tests bind their own fake.
+        $app->instance(\Ayangzy\RealSeed\AI\AIProviderInterface::class, new \Ayangzy\RealSeed\Tests\Fixtures\FakeAIProvider(
+            ['domain' => 'Test application', 'timeline_months' => null, 'tables' => []],
+        ));
         $app['config']->set('realseed.plans_path', sys_get_temp_dir().'/realseed-tests/'.uniqid());
     }
 

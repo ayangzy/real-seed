@@ -6,7 +6,7 @@ use Ayangzy\RealSeed\AI\AIProviderException;
 use Ayangzy\RealSeed\AI\AIProviderInterface;
 
 /**
- * Used when no AI driver is available; RealSeed then runs in no-AI mode.
+ * Stands in when no AI driver can be used; RealSeed then stops and reports the reason.
  */
 final class NullProvider implements AIProviderInterface
 {

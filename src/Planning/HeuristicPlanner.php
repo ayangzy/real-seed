@@ -12,7 +12,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 
 /**
- * Builds a generation plan without AI, from the relationship graph and field inference.
+ * Builds the baseline plan from the relationship graph and field inference; the AI refines it.
  */
 final class HeuristicPlanner
 {

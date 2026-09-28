@@ -64,7 +64,6 @@ it('detects a factory that writes to the database, rolls it back and falls back'
 });
 
 it('applies factory states suggested by the AI', function () {
-    config(['realseed.ai.enabled' => true]);
     app()->instance(\Ayangzy\RealSeed\AI\AIProviderInterface::class, new \Ayangzy\RealSeed\Tests\Fixtures\FakeAIProvider([
         'domain' => 'x', 'timeline_months' => null,
         'tables' => [['table' => 'users', 'count' => null, 'fields' => [], 'states' => [['name' => 'suspended', 'weight' => 1], ['name' => 'rm -rf', 'weight' => 5]]]],

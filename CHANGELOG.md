@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.3.0 (breaking)
+
+- RealSeed always plans with AI. `--no-ai` and the `ai.enabled` setting are removed. When no AI provider can be used, or the AI request fails, RealSeed stops before writing anything and explains why.
+- `laravel/ai` is now a required dependency (installed with RealSeed); only a provider key is needed in `.env`.
+- Requires Laravel 12 or 13 (`laravel/ai` doesn't support Laravel 11).
+- Fix: `--count` scaling after AI planning could give currency/country tables more rows than real entries exist.
+
 ## v0.2.4
 
 - "Could not connect to AI provider" now shows the real cause (timeout, DNS, SSL) with a hint. Timeouts are the usual cause: large schemas need long answers.

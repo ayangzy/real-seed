@@ -35,7 +35,6 @@ function field(string $column, ?string $semantic = null, ?array $samples = null,
 
 function useAi(array|Throwable $response): FakeAIProvider
 {
-    config(['realseed.ai.enabled' => true]);
     app()->instance(AIProviderInterface::class, $fake = new FakeAIProvider($response));
 
     return $fake;
@@ -88,43 +87,42 @@ it('caches the AI plan so re-runs make no call and reproduce the data', function
     expect($fake->calls)->toHaveCount(2);
 });
 
-it('falls back to heuristics when the AI fails', function () {
+it('stops without changes when the AI request fails', function () {
     useAi(new RuntimeException('rate limited'));
 
-    expect(runSeeder())->toBe(0);
-    expect(Artisan::output())->toContain('AI planning failed (rate limited); using built-in heuristics')
-        ->and(DB::table('organizations')->count())->toBe(3);
-});
-
-it('fails without changes when a scenario cannot be planned', function () {
-    useAi(new RuntimeException('timeout'));
-
-    expect(runSeeder(['--scenario' => 'busy agency']))->toBe(1);
-    expect(Artisan::output())->toContain('timeout')->toContain('No database changes were made.')
+    expect(runSeeder())->toBe(1);
+    expect(Artisan::output())->toContain('AI planning failed: rate limited')->toContain('No database changes were made.')
         ->and(DB::table('organizations')->count())->toBe(0);
 });
 
-it('requires AI for scenarios', function () {
-    expect(runSeeder(['--scenario' => 'busy agency', '--no-ai' => true]))->toBe(1);
-    expect(Artisan::output())->toContain('--scenario needs AI planning, which is off (--no-ai)');
+it('stops without changes when no AI provider is available', function () {
+    app()->instance(\Ayangzy\RealSeed\AI\AIProviderInterface::class, new \Ayangzy\RealSeed\AI\Providers\NullProvider('the Laravel AI SDK is not configured'));
+
+    expect(runSeeder())->toBe(1);
+    expect(Artisan::output())->toContain('RealSeed plans your data with AI, but no AI provider is available')
+        ->toContain('No database changes were made.')
+        ->and(DB::table('organizations')->count())->toBe(0);
 });
 
-it('passes the scenario to the AI and skips it with --no-ai', function () {
+it('has no option to skip AI', function () {
+    expect(app(\Ayangzy\RealSeed\Console\Commands\RealSeedCommand::class)->getDefinition()->hasOption('no-ai'))->toBeFalse();
+});
+
+it('passes the scenario to the AI', function () {
     $fake = useAi(suggestions());
 
     runSeeder(['--scenario' => 'agency with 2 clients', '--dry-run' => true]);
-    runSeeder(['--no-ai' => true, '--dry-run' => true]);
 
     expect($fake->calls)->toHaveCount(1)
         ->and($fake->calls[0]['prompt'])->toContain('Scenario requested by the developer: agency with 2 clients');
 });
 
 it('sends structure but never row data to the AI', function () {
-    runSeeder(['--no-ai' => true]);
+    runSeeder();
     DB::table('users')->update(['first_name' => 'Zebediah-Secret']);
 
     $fake = useAi(suggestions());
-    runSeeder(['--dry-run' => true, '--show-prompt' => true]);
+    runSeeder(['--dry-run' => true, '--show-prompt' => true, '--replan' => true]);
     $output = Artisan::output();
 
     expect($fake->calls[0]['prompt'])->toContain('## tasks')->toContain('status')->toContain('references projects.id')
@@ -185,24 +183,6 @@ it('caps the total rows', function () {
         ->sum(fn ($table) => DB::table($table)->count());
 
     expect($total)->toBeLessThanOrEqual(100);
-});
-
-it('points out an AI key that cannot be used because laravel/ai is missing', function () {
-    config(['realseed.ai.enabled' => true]);
-    app()->instance(\Ayangzy\RealSeed\AI\AIProviderInterface::class, new \Ayangzy\RealSeed\AI\Providers\NullProvider('install laravel/ai to enable it'));
-    putenv('OPENAI_API_KEY=sk-test');
-
-    try {
-        runSeeder(['--dry-run' => true]);
-        $output = Artisan::output();
-    } finally {
-        putenv('OPENAI_API_KEY');
-    }
-
-    expect($output)->toContain('! AI planning: unavailable')
-        ->toContain("OPENAI_API_KEY is set, but RealSeed reaches AI providers through the Laravel AI SDK, which isn't installed.")
-        ->toContain('composer require laravel/ai')
-        ->toContain('Planned by:              built-in heuristics');
 });
 
 it('shows how the data was planned in the summary', function () {

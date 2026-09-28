@@ -52,7 +52,6 @@ class RealSeedCommand extends Command
         {--except= : Comma-separated tables to leave untouched}
         {--fresh : Delete existing rows in the affected tables first}
         {--scenario= : Describe the data you want, e.g. "busy clinic with six months of history" (requires AI)}
-        {--no-ai : Plan with built-in heuristics only}
         {--replan : Ask the AI for a new plan instead of reusing the cached one}
         {--show-prompt : Print exactly what would be sent to the AI}
         {--locale= : Locale for names, addresses, phones and currency, e.g. ng, us, gb, de, or a Faker locale like pt_BR}
@@ -66,7 +65,7 @@ class RealSeedCommand extends Command
     /** @var list<string> */
     private array $planNotes = [];
 
-    private string $aiSummary = 'built-in heuristics';
+    private string $aiSummary = 'AI';
 
     public function handle(EnvironmentGuard $guard, ConnectionSafetyCheck $safety, ProjectAnalyzer $analyzer, AIProviderInterface $ai, PlanStore $plans, LocaleRegistry $locales, ExtensionRegistry $extensions): int
     {
@@ -131,15 +130,13 @@ class RealSeedCommand extends Command
         $connection = $this->laravel['db']->connection($target->connection);
 
         // Named scenarios come from code; only free-text scenarios need the AI.
-        $useAi = $this->aiStatus($ai, $scenario === null ? $options['scenario'] : null);
-
-        if ($useAi === null) {
+        if (! $this->ensureAiIsReady($ai)) {
             return $this->noChangesMade();
         }
 
         try {
             $order = (new DependencyResolver)->resolve($analysis->graph);
-            $plan = $this->plan($analysis, $connection, $options, $useAi ? $ai : null, $plans, $extensions, $scenario);
+            $plan = $this->plan($analysis, $connection, $options, $ai, $plans, $extensions, $scenario);
         } catch (CircularDependencyException|PlanningException|AIProviderException|InvalidArgumentException $e) {
             $this->line("<fg=red>✗ {$e->getMessage()}</>");
 
@@ -311,21 +308,12 @@ class RealSeedCommand extends Command
     }
 
     /**
-     * Reports whether AI planning will be used. Returns null when the run can't continue
-     * (a scenario was requested but no AI is available).
+     * RealSeed always plans with AI. Stops before any planning or writing when the
+     * provider can't be used, and says exactly what to set up.
      */
-    private function aiStatus(AIProviderInterface $ai, ?string $scenario): ?bool
+    private function ensureAiIsReady(AIProviderInterface $ai): bool
     {
-        $enabled = (bool) $this->laravel['config']->get('realseed.ai.enabled', true);
-
-        $reason = match (true) {
-            (bool) $this->option('no-ai') => 'off (--no-ai)',
-            ! $enabled => 'off (disabled in config/realseed.php)',
-            ! $ai->available() => 'unavailable ('.($ai instanceof NullProvider ? $ai->reason() : 'install laravel/ai to enable it').')',
-            default => null,
-        };
-
-        if ($reason === null) {
+        if ($ai->available()) {
             $this->aiSummary = 'AI ('.$ai->name().')';
             $this->line('<fg=green>✓</> AI planning: '.$ai->name());
             $this->newLine();
@@ -333,22 +321,12 @@ class RealSeedCommand extends Command
             return true;
         }
 
-        if ($scenario !== null) {
-            $this->line("<fg=red>✗ --scenario needs AI planning, which is {$reason}.</>");
+        $this->line('<fg=red>✗ RealSeed plans your data with AI, but no AI provider is available: '
+            .OutputFormatter::escape($ai instanceof NullProvider ? $ai->reason() : 'the Laravel AI SDK is not installed').'</>');
 
-            return null;
+        if ($this->configuredAiKey() === null) {
+            $this->line('  Add a key to .env, e.g. OPENAI_API_KEY=… (or GEMINI_API_KEY=… with REALSEED_AI_PROVIDER=gemini).');
         }
-
-        $this->aiSummary = "built-in heuristics (AI {$reason})";
-        $this->line("<fg=yellow>! AI planning: {$reason} — using built-in heuristics</>");
-
-        // The most common setup mistake: an API key in .env, but no AI package to use it.
-        if (! $this->option('no-ai') && $enabled && ! $ai->available() && ($key = $this->configuredAiKey()) !== null) {
-            $this->line("<fg=yellow>  {$key} is set, but RealSeed reaches AI providers through the Laravel AI SDK, which isn't installed.</>");
-            $this->line('<fg=yellow>  Run: composer require laravel/ai   (Laravel 12+)</>');
-        }
-
-        $this->newLine();
 
         return false;
     }
@@ -376,7 +354,7 @@ class RealSeedCommand extends Command
      *
      * @param  array{seed: int, size: string, count: ?int, only: ?list<string>, except: list<string>, fresh: bool, scenario: ?string, strategy: string, locale: string}  $options
      */
-    private function plan(ProjectAnalysis $analysis, Connection $connection, array $options, ?AIProviderInterface $ai, PlanStore $plans, ExtensionRegistry $extensions, ?ScenarioProvider $scenario): GenerationPlan
+    private function plan(ProjectAnalysis $analysis, Connection $connection, array $options, AIProviderInterface $ai, PlanStore $plans, ExtensionRegistry $extensions, ?ScenarioProvider $scenario): GenerationPlan
     {
         $config = $this->laravel['config'];
         $locale = strtolower($options['locale']);
@@ -395,7 +373,7 @@ class RealSeedCommand extends Command
             'locale' => $locale,
         ]);
 
-        $cached = $ai !== null && ! $this->option('replan') ? $plans->get($key) : null;
+        $cached = ! $this->option('replan') ? $plans->get($key) : null;
 
         $planOptions = new PlanOptions(
             seed: $options['seed'],
@@ -420,8 +398,7 @@ class RealSeedCommand extends Command
             $base = $this->mergeTrusted($validator, $base, $applicationAnalyzer->suggestions($analysis, $base), $planOptions);
         }
 
-        $requireAi = $scenario === null && $options['scenario'] !== null;
-        $plan = $this->aiPlan($analysis, $base, $planOptions, $ai, $plans, $key, $cached, $scenarioText, $validator, $requireAi);
+        $plan = $this->aiPlan($analysis, $base, $planOptions, $ai, $plans, $key, $cached, $scenarioText, $validator);
 
         // ...and named scenarios and configuration have the final say.
         if ($scenario !== null) {
@@ -457,7 +434,7 @@ class RealSeedCommand extends Command
     /**
      * @param  array{anchor: \Carbon\CarbonImmutable, provider: string, domain: ?string, suggestions: array}|null  $cached
      */
-    private function aiPlan(ProjectAnalysis $analysis, GenerationPlan $base, PlanOptions $planOptions, ?AIProviderInterface $ai, PlanStore $plans, string $key, ?array $cached, ?string $scenarioText, PlanValidator $validator, bool $requireAi): GenerationPlan
+    private function aiPlan(ProjectAnalysis $analysis, GenerationPlan $base, PlanOptions $planOptions, AIProviderInterface $ai, PlanStore $plans, string $key, ?array $cached, ?string $scenarioText, PlanValidator $validator): GenerationPlan
     {
         if ($this->option('show-prompt')) {
             $this->line('<options=bold>AI instructions</>');
@@ -468,7 +445,7 @@ class RealSeedCommand extends Command
             $this->newLine();
         }
 
-        if ($ai === null || $base->totalRows() === 0) {
+        if ($base->totalRows() === 0) {
             return $base;
         }
 
@@ -488,14 +465,7 @@ class RealSeedCommand extends Command
                 $file = $plans->put($key, $base->end, $ai->name(), $scenarioText, $suggestions);
                 $this->line("<fg=green>✓</> AI plan saved to {$file}");
             } catch (AIProviderException $e) {
-                if ($requireAi) {
-                    throw $e;
-                }
-
-                $this->line('<fg=yellow>! AI planning failed ('.OutputFormatter::escape($e->getMessage()).'); using built-in heuristics.</>');
-                $this->newLine();
-
-                return $base;
+                throw new AIProviderException('AI planning failed: '.$e->getMessage(), previous: $e);
             }
         }
 

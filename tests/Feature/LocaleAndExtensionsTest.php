@@ -113,11 +113,11 @@ it('lets reference pickers choose among valid candidates only', function () {
         ->and((int) DB::scalar('select count(*) from project_user pu join projects p on p.id = pu.project_id where pu.user_id != (select min(id) from users u where u.organization_id = p.organization_id)'))->toBe(0);
 });
 
-it('runs named scenarios without AI', function () {
+it('runs named scenarios', function () {
     config(['realseed.scenarios' => ['solo' => Extensions\SoloFounderScenario::class]]);
     $this->refreshApplicationBindings();
 
-    expect(seedRun(['--scenario' => 'solo', '--no-ai' => true]))->toBe(0);
+    expect(seedRun(['--scenario' => 'solo']))->toBe(0);
     expect(Artisan::output())->toContain('Scenario: solo')
         ->and(DB::table('organizations')->count())->toBe(1)
         ->and(DB::table('users')->count())->toBe(1)
@@ -135,7 +135,6 @@ it('applies application analyzers to every plan', function () {
 
 it('lets configuration override AI suggestions', function () {
     config([
-        'realseed.ai.enabled' => true,
         'realseed.overrides' => [
             'users' => [
                 'count' => 4,

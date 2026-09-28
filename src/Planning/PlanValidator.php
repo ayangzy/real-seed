@@ -6,6 +6,7 @@ use Ayangzy\RealSeed\AI\ApplicationContext;
 use Ayangzy\RealSeed\Analysis\ProjectAnalysis;
 use Ayangzy\RealSeed\Graph\DependencyResolver;
 use Ayangzy\RealSeed\Schema\ColumnSchema;
+use Ayangzy\RealSeed\Semantics\ReferenceData;
 use Ayangzy\RealSeed\Semantics\Semantic;
 
 /**
@@ -388,6 +389,15 @@ final class PlanValidator
             foreach ($tables as $name => $plan) {
                 if ($plan->count > 0) {
                     $tables[$name] = $plan->withCount(max(1, (int) floor($plan->count * $factor)));
+                }
+            }
+        }
+
+        // Catalog tables (currencies, countries) can't outgrow the real entries.
+        foreach ($tables as $name => $plan) {
+            foreach ($plan->fields as $field) {
+                if (is_string($catalog = $field->option('catalog')) && $plan->count > ReferenceData::size($catalog)) {
+                    $tables[$name] = $plan = $plan->withCount(ReferenceData::size($catalog));
                 }
             }
         }

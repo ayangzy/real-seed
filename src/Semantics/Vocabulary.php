@@ -6,7 +6,7 @@ use Ayangzy\RealSeed\Generation\SeededRandom;
 use Illuminate\Support\Str;
 
 /**
- * Readable text for no-AI mode. Common entities (tasks, products, posts, ...) get
+ * Readable baseline text, which AI planning refines. Common entities (tasks, products, posts, ...) get
  * realistic values; anything else gets plain, neutral business language built from
  * the table's own name. Never lorem ipsum, never novel excerpts.
  */

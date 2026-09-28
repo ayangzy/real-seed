@@ -32,13 +32,13 @@ return [
     |           null uses the laravel/ai default.
     | model:    model name; null uses the provider default.
     |
-    | Without an available provider, or with --no-ai, RealSeed uses its
-    | built-in heuristics.
+    | AI planning is required: RealSeed stops, without changing anything, when
+    | the provider can't be used. Set the provider's key in .env, for example
+    | OPENAI_API_KEY, or GEMINI_API_KEY with REALSEED_AI_PROVIDER=gemini.
     |
     */
 
     'ai' => [
-        'enabled' => env('REALSEED_AI_ENABLED', true),
         'driver' => env('REALSEED_AI_DRIVER', 'laravel-ai'),
         'provider' => env('REALSEED_AI_PROVIDER'),
         'model' => env('REALSEED_AI_MODEL'),

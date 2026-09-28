@@ -21,8 +21,8 @@ beforeEach(function () {
     $this->setEnvironment('local');
 });
 
-it('writes readable text without AI', function () {
-    Artisan::call('real:seed', ['--size' => 'small', '--seed' => 3, '--no-ai' => true, '--locale' => 'ng', '--no-interaction' => true]);
+it('writes a readable baseline before AI refinement', function () {
+    Artisan::call('real:seed', ['--size' => 'small', '--seed' => 3, '--locale' => 'ng', '--no-interaction' => true]);
 
     $taskTitles = Vocabulary::samples('tasks', 'title');
     $projectNames = Vocabulary::samples('projects', 'name');
@@ -36,7 +36,7 @@ it('writes readable text without AI', function () {
 });
 
 it('never produces lorem ipsum or novel excerpts', function () {
-    Artisan::call('real:seed', ['--size' => 'medium', '--seed' => 9, '--no-ai' => true, '--no-interaction' => true]);
+    Artisan::call('real:seed', ['--size' => 'medium', '--seed' => 9, '--no-interaction' => true]);
 
     $text = collect(['tasks' => ['title'], 'projects' => ['name'], 'comments' => ['body'], 'workflows' => ['name', 'description'], 'tags' => ['name']])
         ->flatMap(fn ($columns, $table) => DB::table($table)->get($columns)->flatMap(fn ($row) => array_values((array) $row)))
@@ -48,7 +48,7 @@ it('never produces lorem ipsum or novel excerpts', function () {
 });
 
 it('builds unique names from the table name', function () {
-    Artisan::call('real:seed', ['--size' => 'medium', '--seed' => 1, '--no-ai' => true, '--no-interaction' => true]);
+    Artisan::call('real:seed', ['--size' => 'medium', '--seed' => 1, '--no-interaction' => true]);
 
     $names = DB::table('workflows')->pluck('name');
 
