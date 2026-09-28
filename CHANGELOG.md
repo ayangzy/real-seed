@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- New: `--per-table=N` gives each table (or each `--only` table) exactly N rows, instead of `--count`'s realistic split of a total.
+
 ## v0.2.4
 
 - RealSeed always plans with AI. `--no-ai` and the `ai.enabled` setting are removed. When no AI provider can be used, or the AI request fails, RealSeed stops before writing anything and explains why.

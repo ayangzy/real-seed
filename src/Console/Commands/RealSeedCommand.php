@@ -47,7 +47,8 @@ class RealSeedCommand extends Command
         {--dry-run : Show the generation plan without changing the database}
         {--seed= : Seed for reproducible output}
         {--size= : Dataset size: small, medium, or large}
-        {--count= : Approximate total number of rows to generate}
+        {--count= : Approximate total number of rows, shared realistically across tables}
+        {--per-table= : Exact number of rows for each table}
         {--only= : Comma-separated tables to generate (missing dependencies are added)}
         {--except= : Comma-separated tables to leave untouched}
         {--fresh : Delete existing rows in the affected tables first}
@@ -183,7 +184,7 @@ class RealSeedCommand extends Command
     }
 
     /**
-     * @return array{seed: int, size: string, count: ?int, only: ?list<string>, except: list<string>, fresh: bool, scenario: ?string, strategy: string, locale: string}
+     * @return array{seed: int, size: string, count: ?int, only: ?list<string>, except: list<string>, fresh: bool, scenario: ?string, strategy: string, locale: string, per_table: ?int}
      */
     private function parseOptions(): array
     {
@@ -198,6 +199,16 @@ class RealSeedCommand extends Command
 
         if ($count !== null && (! ctype_digit((string) $count) || (int) $count < 1)) {
             throw new InvalidArgumentException('--count must be a positive whole number.');
+        }
+
+        $perTable = $this->option('per-table');
+
+        if ($perTable !== null && (! ctype_digit((string) $perTable) || (int) $perTable < 1)) {
+            throw new InvalidArgumentException('--per-table must be a positive whole number.');
+        }
+
+        if ($perTable !== null && $count !== null) {
+            throw new InvalidArgumentException('Use either --count (a total) or --per-table (rows for each table), not both.');
         }
 
         $seed = $this->option('seed');
@@ -228,6 +239,7 @@ class RealSeedCommand extends Command
             'scenario' => trim((string) $this->option('scenario')) ?: null,
             'strategy' => $strategy,
             'locale' => (string) ($this->option('locale') ?? $this->laravel['config']->get('realseed.locale', 'en_US')),
+            'per_table' => $perTable !== null ? (int) $perTable : null,
         ];
     }
 
@@ -352,7 +364,7 @@ class RealSeedCommand extends Command
      * then application analyzers, then AI suggestions (cached so re-runs are free and
      * reproducible), then a named scenario, then config overrides, which always win.
      *
-     * @param  array{seed: int, size: string, count: ?int, only: ?list<string>, except: list<string>, fresh: bool, scenario: ?string, strategy: string, locale: string}  $options
+     * @param  array{seed: int, size: string, count: ?int, only: ?list<string>, except: list<string>, fresh: bool, scenario: ?string, strategy: string, locale: string, per_table: ?int}  $options
      */
     private function plan(ProjectAnalysis $analysis, Connection $connection, array $options, AIProviderInterface $ai, PlanStore $plans, ExtensionRegistry $extensions, ?ScenarioProvider $scenario): GenerationPlan
     {
@@ -368,6 +380,7 @@ class RealSeedCommand extends Command
             'scenario' => $scenarioText,
             'size' => $options['size'],
             'count' => $options['count'],
+            'per_table' => $options['per_table'],
             'only' => $options['only'],
             'except' => $options['except'],
             'locale' => $locale,
@@ -387,6 +400,7 @@ class RealSeedCommand extends Command
             scenario: $options['scenario'],
             fresh: $options['fresh'],
             protected: array_values((array) $config->get('realseed.protected_tables', [])),
+            perTable: $options['per_table'],
         );
 
         $base = $planner->plan($planOptions);

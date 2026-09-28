@@ -238,6 +238,7 @@ The environment name only protects you if it's accurate, so RealSeed also checks
 | `--seed=N` | Reproduce a previous run exactly. A random seed is used and shown otherwise. |
 | `--size=small\|medium\|large` | Dataset size preset (default `medium`). |
 | `--count=N` | Approximate total rows, distributed realistically across tables. |
+| `--per-table=N` | Exactly N rows in each table (or in each `--only` table). |
 | `--only=a,b` | Generate only these tables; missing required parents are added. |
 | `--except=a,b` | Generate everything except these tables. |
 | `--scenario="..."` | Describe the data you want (needs AI), or use a named scenario. |
@@ -259,7 +260,16 @@ Sizes are derived from your relationship graph, not applied per table. Root tabl
 | `medium` | 10 | ×5 | 2,500 | 12 months |
 | `large` | 40 | ×8 | 50,000 | 24 months |
 
-`--count=5000` keeps these proportions and scales the total to about 5,000 rows. With AI planning, the AI adjusts proportions to your domain, for example `1 organization, 20 users, 100 projects, 2,000 tasks, 8,000 comments`. `max_rows` in the config (250,000 by default) caps every run.
+`--count=5000` keeps these proportions and scales the total to about 5,000 rows. Every table gets at least one row, so a small `--count` on many tables still gives each table one row.
+
+To get the same number in every table instead, use `--per-table`:
+
+```bash
+php artisan real:seed --per-table=5                    # exactly 5 rows in each table
+php artisan real:seed --only=invoices,payments --per-table=20
+```
+
+`--per-table` wins over AI suggestions and config counts for that run. Real limits still apply: a `currencies` table can't exceed the 30 real currencies, and a one-to-one table can't exceed its parent. It can't be combined with `--count`. With AI planning, the AI adjusts proportions to your domain, for example `1 organization, 20 users, 100 projects, 2,000 tasks, 8,000 comments`. `max_rows` in the config (250,000 by default) caps every run.
 
 ## Selective seeding
 

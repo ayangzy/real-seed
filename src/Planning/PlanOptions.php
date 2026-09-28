@@ -11,6 +11,7 @@ final readonly class PlanOptions
      * @param  list<string>  $except
      * @param  array<string, int>  $existingCounts  Rows already in each table.
      * @param  list<string>  $protected  Tables holding real data: never generated into, never deleted.
+     * @param  int|null  $perTable  Exact rows for each selected table (--per-table), instead of a total.
      */
     public function __construct(
         public int $seed,
@@ -24,6 +25,7 @@ final readonly class PlanOptions
         public ?string $scenario = null,
         public bool $fresh = false,
         public array $protected = [],
+        public ?int $perTable = null,
     ) {
     }
 

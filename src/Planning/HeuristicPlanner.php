@@ -43,7 +43,11 @@ final class HeuristicPlanner
 
         $counts = $this->estimateCounts($order, $preset);
 
-        if ($options->count !== null) {
+        if ($options->perTable !== null) {
+            foreach (array_keys($targets) as $table) {
+                $counts[$table] = $options->perTable;
+            }
+        } elseif ($options->count !== null) {
             $counts = $this->scaleToTotal($counts, $options->count, $targets, $order);
         }
 

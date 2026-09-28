@@ -377,7 +377,11 @@ final class PlanValidator
         $selected = array_filter($tables, fn (TablePlan $plan, string $name) => $plan->count > 0 && $options->isTarget($name), ARRAY_FILTER_USE_BOTH);
         $selectedTotal = array_sum(array_map(fn (TablePlan $plan) => $plan->count, $selected));
 
-        if ($options->count !== null && $selectedTotal > 0) {
+        if ($options->perTable !== null) {
+            foreach ($selected as $name => $plan) {
+                $tables[$name] = $plan->withCount($options->perTable);
+            }
+        } elseif ($options->count !== null && $selectedTotal > 0) {
             $factor = $options->count / $selectedTotal;
 
             foreach ($selected as $name => $plan) {
