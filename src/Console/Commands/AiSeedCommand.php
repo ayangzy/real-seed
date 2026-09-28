@@ -2,11 +2,16 @@
 
 namespace AISeeder\Console\Commands;
 
+use AISeeder\Analysis\ProjectAnalysis;
+use AISeeder\Analysis\ProjectAnalyzer;
 use AISeeder\Environment\ConnectionSafetyCheck;
 use AISeeder\Environment\EnvironmentGuard;
 use AISeeder\Environment\TargetDatabase;
 use AISeeder\Environment\UnsupportedEnvironmentException;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Str;
+use PDOException;
 
 class AiSeedCommand extends Command
 {
@@ -14,7 +19,7 @@ class AiSeedCommand extends Command
 
     protected $description = 'Generate realistic synthetic data for local, dev, development, or staging environments';
 
-    public function handle(EnvironmentGuard $guard, ConnectionSafetyCheck $safety): int
+    public function handle(EnvironmentGuard $guard, ConnectionSafetyCheck $safety, ProjectAnalyzer $analyzer): int
     {
         $this->newLine();
         $this->line('<options=bold>AI Seeder</>');
@@ -57,9 +62,71 @@ class AiSeedCommand extends Command
         $this->line('<fg=green>✓ Production protection active</>');
         $this->newLine();
 
-        $this->components->warn('Project analysis and generation are not implemented yet.');
+        $analysis = $this->analyze($analyzer, $target);
+
+        if ($analysis === null) {
+            return $this->noChangesMade();
+        }
+
+        $this->components->warn('Data generation is not implemented yet.');
 
         return self::SUCCESS;
+    }
+
+    private function analyze(ProjectAnalyzer $analyzer, TargetDatabase $target): ?ProjectAnalysis
+    {
+        $config = $this->laravel['config'];
+        $migrator = $this->laravel['migrator'];
+
+        try {
+            $analysis = $analyzer->analyze($this->laravel['db']->connection($target->connection), $migrator, [
+                'model_paths' => $config->get('ai-seeder.model_paths', []),
+                'migration_paths' => [$this->laravel->databasePath('migrations'), ...$migrator->paths()],
+                'excluded_tables' => $config->get('ai-seeder.excluded_tables', []),
+                'excluded_columns' => $config->get('ai-seeder.excluded_columns', []),
+            ]);
+        } catch (QueryException|PDOException $e) {
+            $this->line('<fg=red>✗ Could not read the database schema.</>');
+            $this->line($e->getMessage(), verbosity: 'v');
+
+            return null;
+        }
+
+        if (! $analysis->migrations->isUpToDate()) {
+            $this->line(sprintf(
+                '<fg=red>✗ %d of %d migrations have not been run.</> AI Seeder reads the migrated schema; run <options=bold>php artisan migrate</> first.',
+                count($analysis->migrations->pending),
+                $analysis->migrations->total,
+            ));
+
+            return null;
+        }
+
+        $graph = $analysis->graph;
+
+        $this->line("<fg=green>✓</> {$analysis->migrations->total} migrations detected");
+        $this->line('<fg=green>✓</> '.count($analysis->models).' models detected');
+        $this->line('<fg=green>✓</> '.count($analysis->schema->tables).' tables detected');
+        $this->line("<fg=green>✓</> {$graph->relationshipCount()} relationships detected");
+        $this->line('<fg=green>✓</> '.count($analysis->enums).' enums detected');
+        $this->newLine();
+
+        if ($graph->entityTables() !== []) {
+            $this->line('Detected application structures:');
+            $this->newLine();
+
+            foreach ($graph->entityTables() as $table) {
+                $this->line(Str::headline($table));
+            }
+
+            $this->newLine();
+        }
+
+        foreach ($analysis->warnings as $warning) {
+            $this->line("<fg=yellow>! {$warning}</>", verbosity: 'v');
+        }
+
+        return $analysis;
     }
 
     private function rejectEnvironment(?string $environment): int

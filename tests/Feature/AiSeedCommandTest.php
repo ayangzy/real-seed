@@ -64,7 +64,8 @@ it('requires the database name to be typed when local points at a remote host', 
     $this->artisan('ai:seed')
         ->expectsQuestion('Type the database name [myapp] to continue', 'myapp')
         ->expectsOutputToContain('✓ Environment supported')
-        ->assertExitCode(0);
+        ->expectsOutputToContain('Could not read the database schema')
+        ->assertExitCode(1);
 });
 
 it('refuses remote-host confirmation in non-interactive mode', function () {
@@ -83,3 +84,27 @@ it('offers no environment bypass options', function (string $option) {
 
     expect($definition->hasOption($option))->toBeFalse();
 })->with(['force', 'allow-production', 'ignore-environment', 'skip-environment-check', 'unsafe']);
+
+it('summarises the analysed application', function () {
+    \AISeeder\Tests\Fixtures\SaasSchema::create();
+    $this->setEnvironment('local');
+
+    $this->artisan('ai:seed')
+        ->expectsOutputToContain('6 models detected')
+        ->expectsOutputToContain('8 tables detected')
+        ->expectsOutputToContain('2 enums detected')
+        ->expectsOutputToContain('Detected application structures:')
+        ->expectsOutputToContain('Organizations')
+        ->doesntExpectOutputToContain('Project User')
+        ->assertExitCode(0);
+});
+
+it('stops when migrations are pending', function () {
+    $this->setEnvironment('local');
+    $this->app['migrator']->path(__DIR__.'/../Fixtures/migrations');
+
+    $this->artisan('ai:seed')
+        ->expectsOutputToContain('1 of 1 migrations have not been run')
+        ->expectsOutputToContain('No database changes were made.')
+        ->assertExitCode(1);
+});

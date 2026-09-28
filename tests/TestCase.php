@@ -20,6 +20,7 @@ abstract class TestCase extends Orchestra
             'database' => ':memory:',
             'prefix' => '',
         ]);
+        $app['config']->set('ai-seeder.model_paths', [__DIR__.'/Fixtures/Models']);
     }
 
     protected function setEnvironment(mixed $environment): void
