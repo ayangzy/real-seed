@@ -665,7 +665,13 @@ The suite never calls a real AI provider. AI behaviour is tested with fakes, inc
 
 ## Releasing (maintainers)
 
-Releases are automatic: after a push to `main` passes the tests, GitHub tags the next patch version and Packagist publishes it. Put `[minor]` or `[major]` in the commit message for a bigger bump, or `[skip release]` to push without releasing.
+Pushing to `main` doesn't publish anything by itself. To release, put `[release]` in the commit message; after the tests pass, GitHub tags the next version and Packagist publishes it:
+
+| Commit message contains | Version |
+|---|---|
+| `[release]` | patch: v0.3.0 → v0.3.1 |
+| `[release] [minor]` | minor: v0.3.1 → v0.4.0 |
+| `[release] [major]` | major: v0.4.0 → v1.0.0 |
 
 ## License
 

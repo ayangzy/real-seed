@@ -1,11 +1,12 @@
 name: release
 
-# Tags a new version automatically after the tests pass on main, so releases never
-# need a manual `git tag`. Packagist picks the tag up through its webhook.
+# Opt-in releases: a push to main whose commit message contains [release] is tagged
+# as the next version once the tests pass. Packagist picks the tag up through its
+# webhook. Every other push is just saved work.
 #
-# The patch number goes up by default (v0.3.1 -> v0.3.2). Put [minor] or [major]
-# in the commit message to bump those instead (v0.3.2 -> v0.4.0 / v1.0.0), or
-# [skip release] to push without releasing.
+#   [release]          patch   v0.3.0 -> v0.3.1
+#   [release] [minor]  minor   v0.3.1 -> v0.4.0
+#   [release] [major]  major   v0.4.0 -> v1.0.0
 
 on:
   workflow_run:
@@ -35,8 +36,8 @@ jobs:
             echo "This commit is already released."; exit 0
           fi
 
-          if echo "$MESSAGE" | grep -qi '\[skip release\]'; then
-            echo "Release skipped by commit message."; exit 0
+          if ! echo "$MESSAGE" | grep -qi '\[release\]'; then
+            echo "No [release] in the commit message: nothing to release."; exit 0
           fi
 
           latest=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
