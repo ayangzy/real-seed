@@ -34,7 +34,7 @@ it('proceeds in supported environments and shows the target', function () {
 
     $this->artisan('ai:seed')
         ->expectsOutputToContain('Environment: local')
-        ->expectsOutputToContain('Connection: testbench (sqlite)')
+        ->expectsOutputToContain('Connection: testbench ('.config('database.connections.testbench.driver').')')
         ->expectsOutputToContain('✓ Environment supported')
         ->expectsOutputToContain('✓ Production protection active')
         ->assertExitCode(0);

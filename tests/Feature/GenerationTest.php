@@ -169,16 +169,19 @@ it('adds to existing data without key collisions', function () {
 it('requires typed confirmation for --fresh and replaces existing rows', function () {
     seedSaas();
 
+    $database = config('database.connections.testbench.database');
+    $question = "This will permanently delete the rows listed above. Type the database name [{$database}] to continue";
+
     $this->artisan('ai:seed', ['--seed' => 1, '--size' => 'small', '--fresh' => true])
         ->expectsOutputToContain('existing data in these tables will be removed')
-        ->expectsQuestion('This will permanently delete the rows listed above. Type the database name [:memory:] to continue', 'wrong')
+        ->expectsQuestion($question, 'wrong')
         ->expectsOutputToContain('No database changes were made.')
         ->assertExitCode(1);
 
     expect(DB::table('organizations')->count())->toBe(3);
 
     $this->artisan('ai:seed', ['--seed' => 1, '--size' => 'small', '--fresh' => true])
-        ->expectsQuestion('This will permanently delete the rows listed above. Type the database name [:memory:] to continue', ':memory:')
+        ->expectsQuestion($question, $database)
         ->assertExitCode(0);
 
     expect(DB::table('organizations')->count())->toBe(3)
@@ -195,7 +198,12 @@ it('refuses --fresh without an interactive confirmation', function () {
 
 it('rolls back everything when generation fails', function () {
     // Comments are inserted last, so every other table has been written when this fires.
-    DB::unprepared("create trigger fail_comments before insert on comments begin select raise(abort, 'simulated failure'); end");
+    DB::unprepared(match (DB::getDriverName()) {
+        'mysql', 'mariadb' => "create trigger fail_comments before insert on comments for each row signal sqlstate '45000' set message_text = 'simulated failure'",
+        'pgsql' => "create function fail_comments() returns trigger as \$\$ begin raise exception 'simulated failure'; end; \$\$ language plpgsql;
+                    create trigger fail_comments before insert on comments for each row execute function fail_comments();",
+        default => "create trigger fail_comments before insert on comments begin select raise(abort, 'simulated failure'); end",
+    });
 
     expect(seedSaas())->toBe(1);
 
