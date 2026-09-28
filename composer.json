@@ -13,10 +13,10 @@
         "ai"
     ],
     "license": "MIT",
-    "homepage": "https://github.com/ayangzy/laravel-real-seeder",
+    "homepage": "https://github.com/ayangzy/real-seed",
     "support": {
-        "issues": "https://github.com/ayangzy/laravel-real-seeder/issues",
-        "source": "https://github.com/ayangzy/laravel-real-seeder"
+        "issues": "https://github.com/ayangzy/real-seed/issues",
+        "source": "https://github.com/ayangzy/real-seed"
     },
     "authors": [
         {
