@@ -1,7 +1,14 @@
 {
     "name": "aiseeder/laravel-ai-seeder",
     "description": "Generate realistic, relational, temporally coherent synthetic data for non-production Laravel environments.",
-    "keywords": ["laravel", "seeder", "factory", "synthetic-data", "ai", "faker"],
+    "keywords": [
+        "laravel",
+        "seeder",
+        "factory",
+        "synthetic-data",
+        "ai",
+        "faker"
+    ],
     "license": "MIT",
     "type": "library",
     "require": {
@@ -12,9 +19,13 @@
         "illuminate/support": "^13.0"
     },
     "require-dev": {
+        "laravel/ai": "^1.0",
         "orchestra/testbench": "^11.0",
         "pestphp/pest": "^4.0",
         "pestphp/pest-plugin-laravel": "^4.0"
+    },
+    "suggest": {
+        "laravel/ai": "Enables AI planning: realistic quantities, distributions, scenarios and example values (^1.0)."
     },
     "autoload": {
         "psr-4": {

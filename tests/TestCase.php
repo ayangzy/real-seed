@@ -22,6 +22,19 @@ abstract class TestCase extends Orchestra
             'foreign_key_constraints' => true,
         ]);
         $app['config']->set('ai-seeder.model_paths', [__DIR__.'/Fixtures/Models']);
+
+        // Tests never reach a real AI provider; AI tests bind a fake explicitly.
+        $app['config']->set('ai-seeder.ai.enabled', false);
+        $app['config']->set('ai-seeder.plans_path', sys_get_temp_dir().'/ai-seeder-tests/'.uniqid());
+    }
+
+    protected function tearDown(): void
+    {
+        if (isset($this->app)) {
+            (new \Illuminate\Filesystem\Filesystem)->deleteDirectory($this->app['config']->get('ai-seeder.plans_path'));
+        }
+
+        parent::tearDown();
     }
 
     protected function setEnvironment(mixed $environment): void
