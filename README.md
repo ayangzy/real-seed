@@ -110,9 +110,9 @@ AI is used for what it is good at: understanding what your application is, choos
 ## Requirements
 
 - PHP 8.3+
-- Laravel 13
+- Laravel 11, 12 or 13
 - SQLite, MySQL/MariaDB or PostgreSQL (SQL Server is best-effort)
-- Optional: [`laravel/ai`](https://github.com/laravel/ai) for AI planning
+- Optional: [`laravel/ai`](https://github.com/laravel/ai) for AI planning (Laravel 12+). On Laravel 11, RealSeed runs in no-AI mode, or with your own [AI provider](#ai-providers).
 
 ## Installation
 

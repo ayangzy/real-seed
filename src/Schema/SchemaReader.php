@@ -32,7 +32,12 @@ final class SchemaReader
 
         $tables = [];
 
-        foreach ($builder->getTables($builder->getCurrentSchemaListing()) as $table) {
+        // Laravel 12+ lists every schema unless told which; Laravel 11 only lists the current one.
+        $listing = method_exists($builder, 'getCurrentSchemaListing')
+            ? $builder->getTables($builder->getCurrentSchemaListing())
+            : $builder->getTables();
+
+        foreach ($listing as $table) {
             $name = $prefix !== '' && str_starts_with($table['name'], $prefix)
                 ? substr($table['name'], strlen($prefix))
                 : $table['name'];

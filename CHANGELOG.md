@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.1
+
+- Support Laravel 11 and 12 as well as 13. AI planning through `laravel/ai` needs Laravel 12+.
+
 ## Unreleased
 
 Initial release.

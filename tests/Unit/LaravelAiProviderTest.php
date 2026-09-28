@@ -6,7 +6,13 @@ use Ayangzy\RealSeed\AI\Providers\LaravelAiProvider;
 use Laravel\Ai\AiServiceProvider;
 use Laravel\Ai\StructuredAnonymousAgent;
 
-beforeEach(fn () => $this->app->register(AiServiceProvider::class));
+beforeEach(function () {
+    if (! class_exists(AiServiceProvider::class)) {
+        $this->markTestSkipped('laravel/ai is not installed (it requires Laravel 12 or newer).');
+    }
+
+    $this->app->register(AiServiceProvider::class);
+});
 
 it('returns structured output through the Laravel AI SDK', function () {
     StructuredAnonymousAgent::fake([['domain' => 'CRM', 'timeline_months' => 6, 'tables' => []]]);

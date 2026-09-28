@@ -28,18 +28,18 @@
     "require": {
         "php": "^8.3",
         "fakerphp/faker": "^1.24",
-        "illuminate/console": "^13.0",
-        "illuminate/database": "^13.0",
-        "illuminate/support": "^13.0"
+        "illuminate/console": "^11.0|^12.0|^13.0",
+        "illuminate/database": "^11.0|^12.0|^13.0",
+        "illuminate/support": "^11.0|^12.0|^13.0"
     },
     "require-dev": {
         "laravel/ai": "^1.0",
-        "orchestra/testbench": "^11.0",
-        "pestphp/pest": "^4.0",
-        "pestphp/pest-plugin-laravel": "^4.0"
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0",
+        "pestphp/pest-plugin-laravel": "^3.0|^4.0"
     },
     "suggest": {
-        "laravel/ai": "Enables AI planning: realistic quantities, distributions, scenarios and example values (^1.0)."
+        "laravel/ai": "Enables AI planning (Laravel 12+): realistic quantities, distributions, scenarios and example values (^1.0)."
     },
     "autoload": {
         "psr-4": {
