@@ -145,9 +145,15 @@ class RealSeedCommand extends Command
         }
 
         if ($plan->totalRows() === 0) {
-            $this->line('Nothing to generate: every selected table can reuse existing rows.');
+            foreach ($this->planNotes as $note) {
+                $this->line('<fg=yellow>! '.OutputFormatter::escape($note).'</>');
+            }
 
-            return $this->noChangesMade(self::SUCCESS);
+            $this->line($this->planNotes === []
+                ? 'Nothing to generate: every selected table can reuse existing rows.'
+                : '<fg=red>✗ Nothing can be generated: every selected table was skipped for the reasons above.</>');
+
+            return $this->noChangesMade($this->planNotes === [] ? self::SUCCESS : self::FAILURE);
         }
 
         $this->showPlan($plan, $order, $this->planNotes, $options['strategy'], $analysis);
@@ -388,6 +394,11 @@ class RealSeedCommand extends Command
         if ($overrides !== []) {
             $plan = $this->mergeTrusted($validator, $plan, ConfigOverrides::toSuggestions($overrides), $planOptions);
         }
+
+        // Final guarantee before anything is shown or written: every generated table
+        // must have rows available in every table it requires.
+        [$plan, $notes] = $planner->enforceDependencies($plan, $planOptions);
+        array_push($this->planNotes, ...$notes);
 
         return $plan;
     }

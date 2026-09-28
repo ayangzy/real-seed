@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.4
+
+- Fix: skipped tables were only propagated one level, so deeper dependents (e.g. `reconciliation_items` needing `bank_transactions` needing `bank_accounts`) still failed mid-run. Skips now propagate to any depth, and the final plan is re-checked before the confirmation prompt.
+- When every table is skipped, the reasons are shown instead of "nothing to generate".
+- New randomized test: 40 generated schemas must never fail mid-run.
+
 ## v0.1.3
 
 - Fix: a table that requires a skipped table (e.g. `reconciliations` needing `bank_accounts`) failed mid-run. It is now skipped while planning, with a note, and the rest of the data is generated.

@@ -236,7 +236,8 @@ final class HeuristicPlanner
 
     /**
      * A table that needs rows from a table that isn't generated and is empty can't be
-     * generated either. Catching that here reports it before anything is written.
+     * generated either. Skips repeat until nothing changes, so chains of any depth
+     * (accounts -> transactions -> reconciliation items) are caught before anything is written.
      *
      * @param  array<string, TablePlan>  $tables
      * @return array<string, TablePlan>
@@ -244,34 +245,65 @@ final class HeuristicPlanner
     private function skipDependentsOfSkipped(array $tables, DependencyOrder $order, PlanOptions $options): array
     {
         $graph = $this->analysis->graph;
-        $available = fn (string $table) => $tables[$table]->count > 0 || (! $options->fresh && ($options->existingCounts[$table] ?? 0) > 0);
 
-        foreach ($order->tables as $table) {
-            if ($tables[$table]->count === 0) {
-                continue;
-            }
+        do {
+            $changed = false;
 
-            $missing = [];
+            foreach ($order->tables as $table) {
+                if ($tables[$table]->count === 0) {
+                    continue;
+                }
 
-            foreach ($graph->parentEdges($table) as $edge) {
-                if (! $edge->nullable && ! $edge->isSelfReferencing() && ! $order->isDeferred($edge) && ! $available($edge->parent)) {
-                    $missing[] = $edge->parent;
+                $missing = [];
+
+                foreach ($graph->parentEdges($table) as $edge) {
+                    if (! $edge->nullable && ! $edge->isSelfReferencing() && ! $order->isDeferred($edge)
+                        && ! $this->hasRows($edge->parent, $tables, $options)) {
+                        $missing[] = $edge->parent;
+                    }
+                }
+
+                foreach ($graph->morphSlots($table) as $slot) {
+                    if (! $slot->nullable && $slot->targets !== []
+                        && array_filter($slot->targets, fn (string $target) => $this->hasRows($target, $tables, $options)) === []) {
+                        array_push($missing, ...array_values($slot->targets));
+                    }
+                }
+
+                if ($missing !== []) {
+                    $missing = array_values(array_unique($missing));
+                    $this->notes[] = "Skipping [{$table}]: it needs rows in [".implode(', ', $missing).'], '
+                        .(count($missing) === 1 ? 'which is empty and not being generated.' : 'which are empty and not being generated.');
+                    $tables[$table] = $tables[$table]->withCount(0);
+                    $changed = true;
                 }
             }
-
-            foreach ($graph->morphSlots($table) as $slot) {
-                if (! $slot->nullable && $slot->targets !== [] && array_filter($slot->targets, $available) === []) {
-                    array_push($missing, ...array_values($slot->targets));
-                }
-            }
-
-            if ($missing !== []) {
-                $this->notes[] = "Skipping [{$table}]: it needs rows in [".implode(', ', array_unique($missing)).'], which has none and is not being generated.';
-                $tables[$table] = $tables[$table]->withCount(0);
-            }
-        }
+        } while ($changed);
 
         return $tables;
+    }
+
+    /**
+     * Re-checks a finished plan (after AI suggestions and config overrides): every
+     * generated table must have rows available in every table it requires.
+     *
+     * @return array{GenerationPlan, list<string>}
+     */
+    public function enforceDependencies(GenerationPlan $plan, PlanOptions $options): array
+    {
+        $this->notes = [];
+        $order = $this->resolver->resolve($this->analysis->graph);
+        $tables = $this->skipDependentsOfSkipped($plan->tables, $order, $options);
+
+        return [$plan->withTables($tables), $this->notes];
+    }
+
+    /**
+     * @param  array<string, TablePlan>  $tables
+     */
+    private function hasRows(string $table, array $tables, PlanOptions $options): bool
+    {
+        return ($tables[$table]->count ?? 0) > 0 || (! $options->fresh && ($options->existingCounts[$table] ?? 0) > 0);
     }
 
     private function unsupportedReason(string $table): ?string
