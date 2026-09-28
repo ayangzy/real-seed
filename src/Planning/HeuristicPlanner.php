@@ -79,6 +79,8 @@ final class HeuristicPlanner
             $tables[$table] = new TablePlan($table, $count, $fields);
         }
 
+        $tables = $this->skipDependentsOfSkipped($tables, $order, $options);
+
         $now = ($options->now ?? CarbonImmutable::now())->startOfHour();
 
         return new GenerationPlan(
@@ -232,6 +234,46 @@ final class HeuristicPlanner
         return count($content) <= 2;
     }
 
+    /**
+     * A table that needs rows from a table that isn't generated and is empty can't be
+     * generated either. Catching that here reports it before anything is written.
+     *
+     * @param  array<string, TablePlan>  $tables
+     * @return array<string, TablePlan>
+     */
+    private function skipDependentsOfSkipped(array $tables, DependencyOrder $order, PlanOptions $options): array
+    {
+        $graph = $this->analysis->graph;
+        $available = fn (string $table) => $tables[$table]->count > 0 || (! $options->fresh && ($options->existingCounts[$table] ?? 0) > 0);
+
+        foreach ($order->tables as $table) {
+            if ($tables[$table]->count === 0) {
+                continue;
+            }
+
+            $missing = [];
+
+            foreach ($graph->parentEdges($table) as $edge) {
+                if (! $edge->nullable && ! $edge->isSelfReferencing() && ! $order->isDeferred($edge) && ! $available($edge->parent)) {
+                    $missing[] = $edge->parent;
+                }
+            }
+
+            foreach ($graph->morphSlots($table) as $slot) {
+                if (! $slot->nullable && $slot->targets !== [] && array_filter($slot->targets, $available) === []) {
+                    array_push($missing, ...array_values($slot->targets));
+                }
+            }
+
+            if ($missing !== []) {
+                $this->notes[] = "Skipping [{$table}]: it needs rows in [".implode(', ', array_unique($missing)).'], which has none and is not being generated.';
+                $tables[$table] = $tables[$table]->withCount(0);
+            }
+        }
+
+        return $tables;
+    }
+
     private function unsupportedReason(string $table): ?string
     {
         foreach ($this->analysis->graph->parentEdges($table) as $edge) {
@@ -242,7 +284,8 @@ final class HeuristicPlanner
 
         foreach ($this->analysis->graph->morphSlots($table) as $slot) {
             if (! $slot->nullable && $slot->targets === []) {
-                return "no model declares the targets of the polymorphic relation [{$slot->name}].";
+                return "RealSeed can't tell what [{$slot->name}] can point to. Add a morphMany/morphOne relation named after it "
+                    ."to each owning model, or set 'morph_targets' => ['{$table}.{$slot->name}' => [YourModel::class]] in config/realseed.php.";
             }
         }
 

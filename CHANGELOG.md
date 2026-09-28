@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.3
+
+- Fix: a table that requires a skipped table (e.g. `reconciliations` needing `bank_accounts`) failed mid-run. It is now skipped while planning, with a note, and the rest of the data is generated.
+- Polymorphic targets are also learned from types already stored in the table, or from the new `morph_targets` config option.
+- The note for unresolved polymorphic relations explains how to fix them.
+
 ## v0.1.2
 
 - Fix: short unique code columns (e.g. `currencies.code` as `char(3)`) failed with "value is longer than 3 characters". Duplicate repair now respects column length, and short code columns get compact unique codes.

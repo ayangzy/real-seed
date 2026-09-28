@@ -243,6 +243,7 @@ class RealSeedCommand extends Command
                 'migration_paths' => [$this->laravel->databasePath('migrations'), ...$migrator->paths()],
                 'excluded_tables' => $config->get('realseed.excluded_tables', []),
                 'excluded_columns' => $config->get('realseed.excluded_columns', []),
+                'morph_targets' => $config->get('realseed.morph_targets', []),
             ]);
         } catch (QueryException|PDOException $e) {
             $this->line('<fg=red>✗ Could not read the database schema.</>');

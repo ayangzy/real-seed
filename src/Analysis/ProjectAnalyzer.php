@@ -5,7 +5,10 @@ namespace Ayangzy\RealSeed\Analysis;
 use Ayangzy\RealSeed\Graph\SchemaGraph;
 use Ayangzy\RealSeed\Schema\SchemaReader;
 use Illuminate\Database\Connection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Migrations\Migrator;
+use Throwable;
 
 /**
  * Runs the analysis pipeline: migrations -> schema -> models -> enums -> factories -> graph.
@@ -22,7 +25,7 @@ final class ProjectAnalyzer
     }
 
     /**
-     * @param  array{model_paths?: list<string>, migration_paths?: list<string>, excluded_tables?: list<string>, excluded_columns?: list<string>}  $options
+     * @param  array{model_paths?: list<string>, migration_paths?: list<string>, excluded_tables?: list<string>, excluded_columns?: list<string>, morph_targets?: array<string, list<string>>}  $options
      */
     public function analyze(Connection $connection, Migrator $migrator, array $options = []): ProjectAnalysis
     {
@@ -51,10 +54,63 @@ final class ProjectAnalyzer
             schema: $schema,
             models: $models,
             enums: $this->enumAnalyzer->analyze($schema, $models),
-            graph: SchemaGraph::build($schema, $models),
+            graph: $this->withMorphTargets(SchemaGraph::build($schema, $models), $connection, (array) ($options['morph_targets'] ?? [])),
             migrations: $migrations,
             warnings: [...$this->schemaReader->warnings(), ...$this->modelAnalyzer->warnings()],
             factories: $this->factoryAnalyzer->analyze($models),
         );
+    }
+
+    /**
+     * Polymorphic relations whose owning models don't declare morphMany/morphOne still
+     * get targets from configuration ("morph_targets") or from the types already stored.
+     *
+     * @param  array<string, list<string>>  $configured  "table.name" => [model class or morph alias]
+     */
+    private function withMorphTargets(SchemaGraph $graph, Connection $connection, array $configured): SchemaGraph
+    {
+        $targets = [];
+
+        foreach ($graph->morphSlots() as $slot) {
+            $key = "{$slot->table}.{$slot->name}";
+            $types = $configured[$key] ?? [];
+
+            if ($types === [] && $slot->targets === []) {
+                try {
+                    $types = $connection->table($slot->table)->whereNotNull($slot->typeColumn)->distinct()->limit(20)->pluck($slot->typeColumn)->all();
+                } catch (Throwable) {
+                    $types = [];
+                }
+            }
+
+            foreach ($types as $type) {
+                if (is_string($type) && ($resolved = $this->resolveMorphType($type)) !== null) {
+                    $targets[$key][$resolved[0]] = $resolved[1];
+                }
+            }
+        }
+
+        return $targets === [] ? $graph : $graph->withMorphTargets($targets);
+    }
+
+    /**
+     * @return array{string, string}|null [value stored in the type column, target table]
+     */
+    private function resolveMorphType(string $type): ?array
+    {
+        $class = Relation::getMorphedModel($type) ?? $type;
+
+        if (! class_exists($class) || ! is_subclass_of($class, Model::class)) {
+            return null;
+        }
+
+        try {
+            $model = new $class;
+        } catch (Throwable) {
+            return null;
+        }
+
+        // Store what Eloquent itself would store: the alias when one is mapped.
+        return [$model->getMorphClass(), $model->getTable()];
     }
 }

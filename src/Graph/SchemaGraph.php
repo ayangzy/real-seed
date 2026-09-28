@@ -72,6 +72,30 @@ final class SchemaGraph
     }
 
     /**
+     * Adds polymorphic targets found outside the models (existing rows, configuration).
+     *
+     * @param  array<string, array<string, string>>  $targets  "table.name" => [morph class => target table]
+     */
+    public function withMorphTargets(array $targets): self
+    {
+        $slots = $this->morphSlots;
+
+        foreach ($targets as $key => $map) {
+            if (! isset($slots[$key])) {
+                continue;
+            }
+
+            foreach ($map as $morphClass => $table) {
+                if ($this->schema->has($table)) {
+                    $slots[$key] = $slots[$key]->withTarget($morphClass, $table);
+                }
+            }
+        }
+
+        return new self($this->schema, $this->edges, $slots, $this->pivots);
+    }
+
+    /**
      * @return list<string>
      */
     public function tables(): array

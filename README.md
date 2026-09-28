@@ -433,6 +433,7 @@ Other settings:
 | `connection` | Connection to seed (default connection if null) |
 | `model_paths` | Directories scanned for models (default `app/`); add module paths here |
 | `excluded_tables` / `excluded_columns` | Never generated; wildcards allowed (framework tables are excluded by default) |
+| `morph_targets` | What a polymorphic relation can point to, when no model declares it: `'bank_accounts.account' => [User::class, Company::class]` |
 | `size`, `strategy`, `locale`, `currency` | Defaults for the CLI options |
 | `chunk_size`, `existing_rows_limit`, `max_rows` | Performance and safety limits |
 
@@ -596,7 +597,7 @@ The schema is read through Laravel's schema builder, so RealSeed works with ever
 ## Limitations
 
 - **Composite foreign keys** aren't generated. Nullable ones are left null, and tables that require one are skipped with a note.
-- **Polymorphic relations** need a model that declares `morphMany`/`morphOne`/`morphToMany`, so RealSeed knows the target types.
+- **Polymorphic relations** need to know their target types. RealSeed finds them from `morphMany`/`morphOne`/`morphToMany` relations on your models, from types already stored in the table, or from `morph_targets` in the config. Without any of these, the table (and tables that require it) is skipped with a note before anything is written.
 - **A cycle made only of required foreign keys** can't be inserted by anyone. RealSeed names the tables and stops.
 - **Observers and model events** don't fire (see [Performance](#performance)).
 - **Generated users' password** is `password`.
@@ -613,6 +614,8 @@ The schema is read through Laravel's schema builder, so RealSeed works with ever
 | `--scenario needs AI planning` | Install and configure `laravel/ai`, or use a named scenario. |
 | `AI planning failed (...)` | Check your `laravel/ai` credentials and model. RealSeed continued with heuristics. |
 | `... was not used for [table]: its definition writes to the database` | That factory creates records while it's being defined. Fix it, or use `--strategy=ai`. |
+| `RealSeed can't tell what [x] can point to` | Add a `morphMany`/`morphOne` relation named `x` to each owning model, or set `'morph_targets' => ['table.x' => [Model::class]]` in the config. |
+| `Skipping [a]: it needs rows in [b]` | `b` is skipped (see the note above it) and empty; fix `b` or seed it first. |
 | `rows skipped after repeated unique-constraint collisions` | A unique column has too few possible values; give it `samples` or a custom generator. |
 
 For more detail, run with `-v`.

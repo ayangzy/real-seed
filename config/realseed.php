@@ -102,6 +102,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Polymorphic Targets
+    |--------------------------------------------------------------------------
+    |
+    | RealSeed learns what a polymorphic relation can point to from morphMany /
+    | morphOne relations on your models, or from types already in the table.
+    | When neither exists, list them here:
+    |
+    |   'bank_accounts.account' => [App\Models\User::class, App\Models\Company::class],
+    |
+    */
+
+    'morph_targets' => [],
+
+    /*
+    |--------------------------------------------------------------------------
     | Generation Defaults
     |--------------------------------------------------------------------------
     |
