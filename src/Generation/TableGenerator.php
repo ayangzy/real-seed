@@ -63,7 +63,7 @@ final class TableGenerator
             for ($attempt = 0; $attempt < self::MAX_ATTEMPTS && $row === null; $attempt++) {
                 $row = $this->buildRow($schema, $plan, $ordered, $key, $keyStrategy, $keyValue, $i, $sequenceStart + $i + 1, $random, $factory, $strategy);
 
-                if (! $this->resolveConflicts($schema->name, $uniqueIndexes, $row, $i + 1)) {
+                if (! $this->resolveConflicts($schema, $uniqueIndexes, $row, $i + 1)) {
                     $row = null;
                 }
             }
@@ -198,8 +198,10 @@ final class TableGenerator
      *
      * @param  list<list<string>>  $indexes
      */
-    private function resolveConflicts(string $table, array $indexes, BuiltRow $row, int $suffix): bool
+    private function resolveConflicts(TableSchema $schema, array $indexes, BuiltRow $row, int $suffix): bool
     {
+        $table = $schema->name;
+
         foreach ($indexes as $index) {
             if (! $this->unique->exists($table, $index, $row->values)) {
                 continue;
@@ -212,9 +214,13 @@ final class TableGenerator
                 return false;
             }
 
-            $row->values[$column] = str_contains($value, '@')
-                ? preg_replace('/@/', '.'.$suffix.'@', $value, 1)
-                : $value.'-'.$suffix;
+            $repaired = $this->withSuffix($value, $suffix, $schema->column($column)?->maxLength());
+
+            if ($repaired === null) {
+                return false; // too short to make unique: rebuild the row instead
+            }
+
+            $row->values[$column] = $repaired;
 
             if ($this->unique->exists($table, $index, $row->values)) {
                 return false;
@@ -222,6 +228,33 @@ final class TableGenerator
         }
 
         return true;
+    }
+
+    /**
+     * Makes a value unique with a numeric suffix without exceeding the column length.
+     */
+    private function withSuffix(string $value, int $suffix, ?int $max): ?string
+    {
+        if (str_contains($value, '@')) {
+            [$local, $domain] = explode('@', $value, 2);
+            $tail = ".{$suffix}@{$domain}";
+            $base = $local;
+        } else {
+            $tail = "-{$suffix}";
+            $base = $value;
+        }
+
+        if ($max !== null) {
+            $room = $max - mb_strlen($tail);
+
+            if ($room < 1) {
+                return null;
+            }
+
+            $base = mb_substr($base, 0, $room);
+        }
+
+        return $base.$tail;
     }
 
     /**

@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.2
+
+- Fix: short unique code columns (e.g. `currencies.code` as `char(3)`) failed with "value is longer than 3 characters". Duplicate repair now respects column length, and short code columns get compact unique codes.
+- Currency and country tables are filled with real, matching reference data (`NGN | Nigerian Naira | ₦`), with the locale's own entry first.
+
 ## v0.1.1
 
 - Support Laravel 11 and 12 as well as 13. AI planning through `laravel/ai` needs Laravel 12+.

@@ -69,6 +69,8 @@ final class Semantic
     public const JSON = 'json';
     public const COLOR = 'color';
     public const CURRENCY = 'currency';
+    public const CURRENCY_NAME = 'currency.name';
+    public const CURRENCY_SYMBOL = 'currency.symbol';
     public const LOCALE = 'locale';
     public const TIMEZONE = 'timezone';
     public const IMAGE_URL = 'image.url';

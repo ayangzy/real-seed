@@ -7,6 +7,7 @@ use Ayangzy\RealSeed\Graph\DependencyOrder;
 use Ayangzy\RealSeed\Graph\DependencyResolver;
 use Ayangzy\RealSeed\Graph\Edge;
 use Ayangzy\RealSeed\Semantics\FieldInferrer;
+use Ayangzy\RealSeed\Semantics\ReferenceData;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 
@@ -66,7 +67,16 @@ final class HeuristicPlanner
                 $count = 0;
             }
 
-            $tables[$table] = new TablePlan($table, $count, $inferrer->inferTable($schema));
+            $fields = $inferrer->inferTable($schema);
+
+            // A currencies or countries table can't have more rows than there are real entries.
+            foreach ($fields as $field) {
+                if (is_string($catalog = $field->option('catalog'))) {
+                    $count = min($count, ReferenceData::size($catalog));
+                }
+            }
+
+            $tables[$table] = new TablePlan($table, $count, $fields);
         }
 
         $now = ($options->now ?? CarbonImmutable::now())->startOfHour();

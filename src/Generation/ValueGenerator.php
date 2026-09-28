@@ -8,6 +8,7 @@ use Ayangzy\RealSeed\Locale\FakerLocale;
 use Ayangzy\RealSeed\Locale\LocaleProvider;
 use Ayangzy\RealSeed\Planning\FieldPlan;
 use Ayangzy\RealSeed\Schema\ColumnSchema;
+use Ayangzy\RealSeed\Semantics\ReferenceData;
 use Ayangzy\RealSeed\Semantics\Semantic;
 use Carbon\CarbonImmutable;
 use Closure;
@@ -67,6 +68,10 @@ final class ValueGenerator
             return $this->fit($custom->generate($context), $column);
         }
 
+        if (is_string($plan->option('catalog')) && ($entry = $this->catalogValue($plan, $row)) !== null) {
+            return $this->fit($entry, $column);
+        }
+
         $samples = $plan->option('samples');
 
         if (is_array($samples) && $samples !== [] && ! $this->isTemporal($plan->semantic)) {
@@ -113,7 +118,7 @@ final class ValueGenerator
             Semantic::SENTENCE => $this->text($faker, min(160, $column->maxLength() ?? 160)),
             Semantic::PARAGRAPH => $this->text($faker, $random->int(160, 600)),
             Semantic::SLUG => Str::slug($this->label($row) ?? $faker->words(3, true)),
-            Semantic::CODE => $this->code($row),
+            Semantic::CODE => $this->code($row, $column),
             Semantic::WORD => $faker->word(),
 
             Semantic::MONEY => $this->money($plan, $column, $random),
@@ -139,11 +144,34 @@ final class ValueGenerator
             Semantic::JSON => '[]',
             Semantic::COLOR => $faker->hexColor(),
             Semantic::CURRENCY => $this->locale->currency(),
+            Semantic::CURRENCY_NAME => ReferenceData::CURRENCIES[$this->locale->currency()][0] ?? $this->locale->currency(),
+            Semantic::CURRENCY_SYMBOL => ReferenceData::CURRENCIES[$this->locale->currency()][1] ?? $this->locale->currency(),
             Semantic::LOCALE => $this->appLocale,
             Semantic::TIMEZONE => $faker->timezone(),
             Semantic::NULL => $column->nullable ? null : '',
 
             default => $faker->word(),
+        };
+    }
+
+    /**
+     * The row's entry in a reference catalog; every column of the row uses the same entry.
+     */
+    private function catalogValue(FieldPlan $plan, RowState $row): ?string
+    {
+        $catalog = (string) $plan->option('catalog');
+        $preferred = $catalog === 'currencies' ? $this->locale->currency() : $this->locale->countryCode();
+        $entry = ReferenceData::entry($catalog, $row->sequence, $preferred);
+
+        if ($entry === null) {
+            return null;
+        }
+
+        return match ($plan->semantic) {
+            Semantic::CURRENCY, Semantic::COUNTRY_CODE => $plan->option('alpha3') ? ($entry['alpha3'] ?? $entry['code']) : $entry['code'],
+            Semantic::CURRENCY_NAME, Semantic::COUNTRY => $entry['name'],
+            Semantic::CURRENCY_SYMBOL => $entry['symbol'] ?? null,
+            default => null,
         };
     }
 
@@ -264,8 +292,13 @@ final class ValueGenerator
     /**
      * Sequential, readable codes such as INV-000042 for invoices.number.
      */
-    private function code(RowState $row): string
+    private function code(RowState $row, ColumnSchema $column): string
     {
+        // Short columns get compact base-36 codes (001, 002, ... 00A) that stay unique.
+        if (($max = $column->maxLength()) !== null && $max < 10) {
+            return strtoupper(str_pad(base_convert((string) $row->sequence, 10, 36), $max, '0', STR_PAD_LEFT));
+        }
+
         $prefix = strtoupper(substr(preg_replace('/[^a-z]/i', '', Str::singular($row->table)), 0, 3)) ?: 'REF';
 
         return sprintf('%s-%06d', $prefix, $row->sequence);

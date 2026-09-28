@@ -84,6 +84,7 @@ final class FieldInferrer
         $plan = $this->structural($table, $column)
             ?? $this->fromEnum($table, $column)
             ?? $this->fromCast($table, $column)
+            ?? $this->fromCatalog($table, $column)
             ?? $this->fromName($table, $column)
             ?? $this->fromType($column);
 
@@ -141,6 +142,37 @@ final class FieldInferrer
             in_array($cast, ['bool', 'boolean'], true) => new FieldPlan(Semantic::BOOLEAN, ['true_rate' => $this->trueRate($column->name)]),
             in_array($cast, ['array', 'json', 'object', 'collection', 'encrypted:array', 'encrypted:collection', 'encrypted:object'], true),
             str_contains($cast, 'asarrayobject'), str_contains($cast, 'ascollection') => new FieldPlan(Semantic::JSON),
+            default => null,
+        };
+    }
+
+    /**
+     * Reference tables such as currencies and countries get real, matching entries
+     * (USD / US Dollar / $) instead of invented values.
+     */
+    private function fromCatalog(TableSchema $table, ColumnSchema $column): ?FieldPlan
+    {
+        if (! in_array($column->family(), ['string', 'text'], true)) {
+            return null;
+        }
+
+        $entity = Str::afterLast(Str::singular(strtolower($table->name)), '_');
+        $name = strtolower($column->name);
+
+        return match ($entity) {
+            'currency' => match (true) {
+                in_array($name, ['code', 'iso', 'iso_code', 'currency_code', 'alpha_code'], true) => new FieldPlan(Semantic::CURRENCY, ['catalog' => 'currencies']),
+                in_array($name, ['name', 'title', 'label'], true) => new FieldPlan(Semantic::CURRENCY_NAME, ['catalog' => 'currencies']),
+                in_array($name, ['symbol', 'sign'], true) => new FieldPlan(Semantic::CURRENCY_SYMBOL, ['catalog' => 'currencies']),
+                default => null,
+            },
+            'country' => match (true) {
+                in_array($name, ['iso3', 'alpha3', 'alpha_3', 'iso_alpha3'], true) => new FieldPlan(Semantic::COUNTRY_CODE, ['catalog' => 'countries', 'alpha3' => true]),
+                in_array($name, ['code', 'iso', 'iso2', 'iso_code', 'alpha2', 'alpha_2', 'country_code'], true)
+                    => new FieldPlan(Semantic::COUNTRY_CODE, ['catalog' => 'countries', 'alpha3' => $column->maxLength() === 3]),
+                in_array($name, ['name', 'title', 'label'], true) => new FieldPlan(Semantic::COUNTRY, ['catalog' => 'countries']),
+                default => null,
+            },
             default => null,
         };
     }

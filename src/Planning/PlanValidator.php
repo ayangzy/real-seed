@@ -27,7 +27,7 @@ final class PlanValidator
         Semantic::DOMAIN, Semantic::IP, Semantic::PHONE, Semantic::STREET, Semantic::CITY, Semantic::STATE, Semantic::POSTCODE,
         Semantic::COUNTRY, Semantic::COUNTRY_CODE, Semantic::COMPANY, Semantic::JOB_TITLE, Semantic::TITLE, Semantic::NAME,
         Semantic::SENTENCE, Semantic::PARAGRAPH, Semantic::SLUG, Semantic::CODE, Semantic::WORD, Semantic::COLOR,
-        Semantic::CURRENCY, Semantic::LOCALE, Semantic::TIMEZONE, Semantic::IMAGE_URL,
+        Semantic::CURRENCY, Semantic::CURRENCY_NAME, Semantic::CURRENCY_SYMBOL, Semantic::LOCALE, Semantic::TIMEZONE, Semantic::IMAGE_URL,
     ];
 
     private const SAMPLEABLE = [
