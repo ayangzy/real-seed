@@ -186,3 +186,29 @@ it('caps the total rows', function () {
 
     expect($total)->toBeLessThanOrEqual(100);
 });
+
+it('points out an AI key that cannot be used because laravel/ai is missing', function () {
+    config(['realseed.ai.enabled' => true]);
+    app()->instance(\Ayangzy\RealSeed\AI\AIProviderInterface::class, new \Ayangzy\RealSeed\AI\Providers\NullProvider('install laravel/ai to enable it'));
+    putenv('OPENAI_API_KEY=sk-test');
+
+    try {
+        runSeeder(['--dry-run' => true]);
+        $output = Artisan::output();
+    } finally {
+        putenv('OPENAI_API_KEY');
+    }
+
+    expect($output)->toContain('! AI planning: unavailable')
+        ->toContain("OPENAI_API_KEY is set, but RealSeed reaches AI providers through the Laravel AI SDK, which isn't installed.")
+        ->toContain('composer require laravel/ai')
+        ->toContain('Planned by:              built-in heuristics');
+});
+
+it('shows how the data was planned in the summary', function () {
+    useAi(suggestions());
+
+    runSeeder();
+
+    expect(Artisan::output())->toContain('✓ AI planning: fake')->toContain('Planned by: AI (fake)');
+});

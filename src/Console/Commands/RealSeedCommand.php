@@ -66,6 +66,8 @@ class RealSeedCommand extends Command
     /** @var list<string> */
     private array $planNotes = [];
 
+    private string $aiSummary = 'built-in heuristics';
+
     public function handle(EnvironmentGuard $guard, ConnectionSafetyCheck $safety, ProjectAnalyzer $analyzer, AIProviderInterface $ai, PlanStore $plans, LocaleRegistry $locales, ExtensionRegistry $extensions): int
     {
         $this->newLine();
@@ -324,7 +326,8 @@ class RealSeedCommand extends Command
         };
 
         if ($reason === null) {
-            $this->line('AI planning: '.$ai->name());
+            $this->aiSummary = 'AI ('.$ai->name().')';
+            $this->line('<fg=green>✓</> AI planning: '.$ai->name());
             $this->newLine();
 
             return true;
@@ -336,10 +339,34 @@ class RealSeedCommand extends Command
             return null;
         }
 
-        $this->line("AI planning: {$reason} — using built-in heuristics");
+        $this->aiSummary = "built-in heuristics (AI {$reason})";
+        $this->line("<fg=yellow>! AI planning: {$reason} — using built-in heuristics</>");
+
+        // The most common setup mistake: an API key in .env, but no AI package to use it.
+        if (! $this->option('no-ai') && $enabled && ! $ai->available() && ($key = $this->configuredAiKey()) !== null) {
+            $this->line("<fg=yellow>  {$key} is set, but RealSeed reaches AI providers through the Laravel AI SDK, which isn't installed.</>");
+            $this->line('<fg=yellow>  Run: composer require laravel/ai   (Laravel 12+)</>');
+        }
+
         $this->newLine();
 
         return false;
+    }
+
+    /**
+     * The name of an AI provider key present in the environment, if any.
+     */
+    private function configuredAiKey(): ?string
+    {
+        foreach (['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GEMINI_API_KEY', 'MISTRAL_API_KEY', 'GROQ_API_KEY', 'DEEPSEEK_API_KEY', 'XAI_API_KEY', 'OPENROUTER_API_KEY'] as $key) {
+            $value = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
+
+            if (is_string($value) && $value !== '') {
+                return $key;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -522,6 +549,7 @@ class RealSeedCommand extends Command
         $this->line('Circular dependencies:   '.($order->hasCycles()
             ? count($order->deferred).' resolved by back-filling ('.implode(', ', array_map(fn ($edge) => $edge->child.'.'.$edge->columns[0], $order->deferred)).')'
             : 'none'));
+        $this->line("Planned by:              {$this->aiSummary}");
         $this->line("Seed:                    {$plan->seed}");
         $this->line('Timeline:                '.$plan->start->toDateString().' → '.$plan->end->toDateString());
         $this->line("Strategy:                {$strategy}".$this->factorySummary($strategy, $plan, $analysis));
@@ -713,6 +741,7 @@ class RealSeedCommand extends Command
         }
 
         $this->newLine();
+        $this->line("Planned by: {$this->aiSummary}");
         $this->line(sprintf('Generation time: %.2fs', $stats->seconds));
         $this->line("Reproduce with: php artisan real:seed --seed={$plan->seed}", verbosity: 'v');
     }

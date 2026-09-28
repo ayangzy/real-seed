@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.1
+
+- The AI planning status is now highlighted (✓ or !), repeated in the plan ("Planned by: …") and in the final summary.
+- When an AI provider key such as `OPENAI_API_KEY` is set but `laravel/ai` isn't installed, RealSeed says so and shows the install command, instead of silently using built-in heuristics.
+
 ## v0.2.0
 
 - New: `protected_tables` config. Protected tables are never generated into or deleted (not even by `--fresh`) but are still used as parents for generated data. Skip notes mark protected tables.
