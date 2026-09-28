@@ -663,6 +663,10 @@ vendor/bin/pest --group=benchmark                # 100k rows
 
 The suite never calls a real AI provider. AI behaviour is tested with fakes, including hostile AI output.
 
+## Releasing (maintainers)
+
+Releases are automatic: after a push to `main` passes the tests, GitHub tags the next patch version and Packagist publishes it. Put `[minor]` or `[major]` in the commit message for a bigger bump, or `[skip release]` to push without releasing.
+
 ## License
 
 RealSeed is open-source software licensed under the [MIT license](LICENSE).

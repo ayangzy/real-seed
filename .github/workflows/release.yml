@@ -1,0 +1,58 @@
+name: release
+
+# Tags a new version automatically after the tests pass on main, so releases never
+# need a manual `git tag`. Packagist picks the tag up through its webhook.
+#
+# The patch number goes up by default (v0.3.1 -> v0.3.2). Put [minor] or [major]
+# in the commit message to bump those instead (v0.3.2 -> v0.4.0 / v1.0.0), or
+# [skip release] to push without releasing.
+
+on:
+  workflow_run:
+    workflows: [tests]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Tag the next version
+        env:
+          MESSAGE: ${{ github.event.workflow_run.head_commit.message }}
+        run: |
+          if git tag --points-at HEAD | grep -q '^v'; then
+            echo "This commit is already released."; exit 0
+          fi
+
+          if echo "$MESSAGE" | grep -qi '\[skip release\]'; then
+            echo "Release skipped by commit message."; exit 0
+          fi
+
+          latest=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
+          latest=${latest:-v0.0.0}
+          IFS=. read -r major minor patch <<< "${latest#v}"
+
+          if echo "$MESSAGE" | grep -qi '\[major\]'; then
+            next="v$((major + 1)).0.0"
+          elif echo "$MESSAGE" | grep -qi '\[minor\]'; then
+            next="v${major}.$((minor + 1)).0"
+          else
+            next="v${major}.${minor}.$((patch + 1))"
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$next" -m "Release $next"
+          git push origin "$next"
+          echo "Released $next (previous: $latest)"
