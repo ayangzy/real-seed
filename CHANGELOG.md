@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.2.5
 
 - New: `--per-table=N` gives each table (or each `--only` table) exactly N rows, instead of `--count`'s realistic split of a total.
 
@@ -66,7 +66,7 @@
 
 - Support Laravel 11 and 12 as well as 13. AI planning through `laravel/ai` needs Laravel 12+.
 
-## Unreleased
+## v0.2.5
 
 Initial release.
 
